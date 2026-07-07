@@ -1,0 +1,136 @@
+<footer class="footer">
+    <div class="footer-content">
+        <div class="logo" style="font-size: 15px;">
+            <div class="logo-icon" style="width: 30px; height: 30px; font-size: 13px;">C</div>
+            <span><%= site.name %></span>
+        </div>
+
+        <div class="footer-links">
+            <a href="/terms" class="footer-link">Terms</a>
+            <a href="/privacy" class="footer-link">Privacy</a>
+            <a href="/contact" class="footer-link">Contact</a>
+            <% if (site.support_email) { %>
+                <a href="mailto:<%= site.support_email %>" class="footer-link">
+                    <i class="fas fa-envelope"></i> <%= site.support_email %>
+                </a>
+            <% } %>
+            <% if (site.support_phone) { %>
+                <a href="tel:<%= site.support_phone %>" class="footer-link">
+                    <i class="fas fa-phone"></i> <%= site.support_phone %>
+                </a>
+            <% } %>
+        </div>
+
+        <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center;">
+            <% if (site.support_whatsapp) { %>
+                <a href="https://wa.me/<%= site.support_whatsapp.replace(/\D/g, '') %>" target="_blank" class="support-btn">
+                    <i class="fab fa-whatsapp" style="color: var(--signal);"></i>
+                    <span>Chat on WhatsApp</span>
+                </a>
+            <% } %>
+            <% if (site.support_email) { %>
+                <a href="mailto:<%= site.support_email %>" class="support-btn">
+                    <i class="fas fa-envelope" style="color: var(--bridge);"></i>
+                    <span>Email Support</span>
+                </a>
+            <% } %>
+            <% if (site.support_phone) { %>
+                <a href="tel:<%= site.support_phone %>" class="support-btn">
+                    <i class="fas fa-phone" style="color: var(--bridge);"></i>
+                    <span>Call Us</span>
+                </a>
+            <% } %>
+        </div>
+
+        <div style="color: var(--mist); font-size: 13px;">
+            &copy; <%= site.current_year %> <%= site.name %>. All rights reserved.
+        </div>
+    </div>
+</footer>
+
+<!-- Floating WhatsApp Button -->
+<% if (site.support_whatsapp) { %>
+<a href="https://wa.me/<%= site.support_whatsapp.replace(/\D/g, '') %>" target="_blank" class="whatsapp-float" aria-label="Chat on WhatsApp">
+    <i class="fab fa-whatsapp"></i>
+</a>
+<% } %>
+
+<!-- ==================== PERSISTENT TICKER TAPE ==================== -->
+<div class="ticker-tape" id="tickerTape">
+    <div class="ticker-track" id="tickerTrack">
+        <div class="ticker-item"><span class="sym">BTC</span><span class="val mono" id="tickerBTC">$0.00</span><span class="chg up" id="tickerBTCChg">+0.00%</span></div>
+        <div class="ticker-item"><span class="sym">ETH</span><span class="val mono">$1,619.00</span><span class="chg up">+0.70%</span></div>
+        <div class="ticker-item"><span class="sym">TSLA</span><span class="val mono">$425.30</span><span class="chg up">+1.12%</span></div>
+        <div class="ticker-item"><span class="sym">AMZN</span><span class="val mono">$241.70</span><span class="chg up">+1.41%</span></div>
+        <div class="ticker-item"><span class="sym">AAPL</span><span class="val mono">$294.38</span><span class="chg up">+1.73%</span></div>
+        <div class="ticker-item"><span class="sym">META</span><span class="val mono">$612.91</span><span class="chg up">+8.81%</span></div>
+        <div class="ticker-item"><span class="sym">GOOGL</span><span class="val mono">$361.21</span><span class="chg up">+1.07%</span></div>
+        <div class="ticker-item"><span class="sym">EUR/USD</span><span class="val mono">1.0842</span><span class="chg down">-0.12%</span></div>
+        <!-- duplicate set for seamless loop -->
+        <div class="ticker-item"><span class="sym">BTC</span><span class="val mono" id="tickerBTC2">$0.00</span><span class="chg up" id="tickerBTCChg2">+0.00%</span></div>
+        <div class="ticker-item"><span class="sym">ETH</span><span class="val mono">$1,619.00</span><span class="chg up">+0.70%</span></div>
+        <div class="ticker-item"><span class="sym">TSLA</span><span class="val mono">$425.30</span><span class="chg up">+1.12%</span></div>
+        <div class="ticker-item"><span class="sym">AMZN</span><span class="val mono">$241.70</span><span class="chg up">+1.41%</span></div>
+        <div class="ticker-item"><span class="sym">AAPL</span><span class="val mono">$294.38</span><span class="chg up">+1.73%</span></div>
+        <div class="ticker-item"><span class="sym">META</span><span class="val mono">$612.91</span><span class="chg up">+8.81%</span></div>
+        <div class="ticker-item"><span class="sym">GOOGL</span><span class="val mono">$361.21</span><span class="chg up">+1.07%</span></div>
+        <div class="ticker-item"><span class="sym">EUR/USD</span><span class="val mono">1.0842</span><span class="chg down">-0.12%</span></div>
+    </div>
+</div>
+
+<!-- Socket.IO -->
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+    // Keep the persistent ticker tape's BTC entry live wherever a socket connection exists.
+    (function () {
+        if (typeof io === 'undefined') return;
+        const tickerSocket = io();
+        tickerSocket.on('btcPrice', (data) => {
+            const price = '$' + data.price.toLocaleString();
+            const change = data.change24h.toFixed(2);
+            const isUp = data.change24h >= 0;
+            ['tickerBTC', 'tickerBTC2'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = price;
+            });
+            ['tickerBTCChg', 'tickerBTCChg2'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.textContent = (isUp ? '+' : '') + change + '%';
+                    el.className = 'chg ' + (isUp ? 'up' : 'down');
+                }
+            });
+        });
+    })();
+</script>
+
+<!-- Flash Messages Auto-hide -->
+<script>
+    setTimeout(() => {
+        document.querySelectorAll('.alert').forEach(alert => {
+            alert.style.opacity = '0';
+            alert.style.transition = 'opacity 0.5s ease';
+            setTimeout(() => alert.remove(), 500);
+        });
+    }, 5000);
+</script>
+
+<!-- Live Chat Widget (Tawk.to) -->
+<% if (site.live_chat_enabled && site.tawkto_id) { %>
+<script type="text/javascript">
+    var Tawk_API = Tawk_API || {}, Tawk_LoadStart = new Date();
+    (function(){
+        var s1 = document.createElement("script"),
+            s0 = document.getElementsByTagName("script")[0];
+        s1.async = true;
+        s1.src = 'https://embed.tawk.to/<%= site.tawkto_id %>/default';
+        s1.charset = 'UTF-8';
+        s1.setAttribute('crossorigin', '*');
+        s0.parentNode.insertBefore(s1, s0);
+    })();
+</script>
+<% } %>
+
+</body>
+</html>

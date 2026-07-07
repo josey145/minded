@@ -1,0 +1,962 @@
+<%- include('../partials/head') %>
+<%- include('../partials/navbar') %>
+
+<style>
+  .reg-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 120px 16px 40px;
+  }
+
+  .reg-card {
+    width: 100%;
+    max-width: 560px;
+    background: var(--surface);
+    border: 1px solid var(--edge);
+    border-radius: 20px;
+    padding: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .reg-card::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 260px; height: 260px;
+    background: radial-gradient(circle, var(--signal-dim) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .progress-wrap {
+    display: flex;
+    align-items: center;
+    margin-bottom: 36px;
+  }
+
+  .prog-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    position: relative;
+  }
+
+  .prog-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 18px;
+    left: 50%;
+    width: 100%;
+    height: 2px;
+    background: var(--edge);
+    z-index: 0;
+    transition: background 0.4s;
+  }
+
+  .prog-step.done:not(:last-child)::after { background: var(--signal); }
+
+  .prog-dot {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--surface-2);
+    border: 2px solid var(--edge);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--mist-dim);
+    z-index: 1;
+    transition: all 0.3s;
+    position: relative;
+  }
+
+  .prog-step.active .prog-dot {
+    background: var(--signal);
+    border-color: var(--signal);
+    color: #04140e;
+    box-shadow: 0 0 20px var(--signal-dim);
+  }
+
+  .prog-step.done .prog-dot { background: transparent; border-color: var(--signal); color: var(--signal); }
+
+  .prog-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--mist-dim);
+    margin-top: 6px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .prog-step.active .prog-label { color: var(--signal); }
+  .prog-step.done .prog-label { color: var(--signal); }
+
+  .reg-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--paper);
+    margin-bottom: 4px;
+  }
+
+  .reg-sub { color: var(--mist); font-size: 14px; margin-bottom: 28px; }
+
+  .step-panel { display: none; }
+  .step-panel.active { display: block; animation: fadeUp 0.3s ease; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-group { margin-bottom: 16px; }
+
+  .reg-page .form-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--mist);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 6px;
+  }
+
+  .input-wrap { position: relative; }
+  .input-wrap i {
+    position: absolute;
+    left: 14px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--mist-dim);
+    font-size: 14px;
+    pointer-events: none;
+  }
+
+  .reg-page .form-input {
+    width: 100%;
+    background: var(--surface-2);
+    border: 1px solid var(--edge);
+    border-radius: 10px;
+    padding: 12px 14px 12px 42px;
+    color: var(--paper);
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+  }
+
+  .reg-page .form-input:focus {
+    outline: none;
+    border-color: var(--signal);
+    box-shadow: 0 0 0 3px var(--signal-dim);
+  }
+
+  select.form-input { cursor: pointer; appearance: none; }
+  .reg-page .form-input::placeholder { color: var(--mist-dim); }
+
+  .upload-zone {
+    border: 2px dashed var(--edge);
+    border-radius: 12px;
+    padding: 32px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    background: var(--surface-2);
+  }
+
+  .upload-zone:hover, .upload-zone.dragover {
+    border-color: var(--signal);
+    background: var(--signal-dim);
+  }
+
+  .upload-zone input[type="file"] {
+    position: absolute; inset: 0;
+    opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+
+  .upload-icon {
+    width: 52px; height: 52px;
+    background: var(--signal-dim);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 12px;
+    font-size: 22px;
+    color: var(--signal);
+  }
+
+  .upload-title { color: var(--mist); font-size: 14px; font-weight: 500; }
+  .upload-sub { color: var(--mist-dim); font-size: 12px; margin-top: 4px; }
+  .upload-preview { display: none; margin-top: 12px; }
+  .upload-preview img { max-height: 120px; border-radius: 8px; border: 1px solid var(--edge); }
+  .upload-preview .file-name { color: var(--signal); font-size: 13px; margin-top: 6px; font-family: 'IBM Plex Mono', monospace; }
+
+  .code-inputs {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin: 24px 0;
+  }
+
+  .code-input {
+    width: 64px; height: 64px;
+    background: var(--surface-2);
+    border: 2px solid var(--edge);
+    border-radius: 12px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--paper);
+    text-align: center;
+    transition: all 0.2s;
+  }
+
+  .code-input:focus {
+    outline: none;
+    border-color: var(--signal);
+    box-shadow: 0 0 0 3px var(--signal-dim);
+  }
+
+  .verify-info {
+    background: var(--signal-dim);
+    border: 1px solid var(--edge);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 13px;
+    color: var(--mist);
+    text-align: center;
+    margin-bottom: 8px;
+  }
+
+  .verify-info strong { color: var(--signal); }
+
+  .btn-row { display: flex; gap: 12px; margin-top: 24px; }
+
+  .btn-back {
+    flex: 1;
+    padding: 13px;
+    border-radius: 10px;
+    background: transparent;
+    border: 1px solid var(--edge);
+    color: var(--mist);
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-back:hover { border-color: var(--mist-dim); color: var(--paper); }
+
+  .btn-next {
+    flex: 2;
+    padding: 13px;
+    border-radius: 10px;
+    background: var(--signal);
+    border: none;
+    color: #04140e;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+
+  .btn-next:hover { transform: translateY(-1px); box-shadow: 0 8px 24px var(--signal-dim); }
+  .btn-next:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .btn-full { width: 100%; flex: unset; }
+
+  .terms-row {
+    display: flex; align-items: flex-start; gap: 10px;
+    margin-bottom: 20px; font-size: 13px; color: var(--mist);
+  }
+  .terms-row input { accent-color: var(--signal); margin-top: 3px; flex-shrink: 0; }
+  .terms-row a { color: var(--signal); text-decoration: none; }
+
+  .reg-page .auth-footer { text-align: center; margin-top: 24px; font-size: 14px; color: var(--mist); }
+  .reg-page .auth-footer a { color: var(--signal); text-decoration: none; font-weight: 600; }
+
+  .resend-link { text-align: center; font-size: 13px; color: var(--mist); margin-top: 8px; }
+  .resend-link button {
+    background: none; border: none; color: var(--signal);
+    cursor: pointer; font-size: 13px; font-family: inherit; padding: 0;
+  }
+  .resend-link button:disabled { color: var(--mist-dim); cursor: not-allowed; }
+
+  @media (max-width: 480px) {
+    .reg-card { padding: 28px 20px; }
+    .form-row { grid-template-columns: 1fr; }
+    .code-input { width: 52px; height: 52px; font-size: 22px; }
+  }
+</style>
+
+<div class="reg-page">
+  <div class="reg-card">
+
+    <div class="progress-wrap">
+      <div class="prog-step active" id="prog-1">
+        <div class="prog-dot">1</div>
+        <span class="prog-label">Personal</span>
+      </div>
+      <div class="prog-step" id="prog-2">
+        <div class="prog-dot">2</div>
+        <span class="prog-label">ID Verify</span>
+      </div>
+      <div class="prog-step" id="prog-3">
+        <div class="prog-dot">3</div>
+        <span class="prog-label">Confirm</span>
+      </div>
+    </div>
+
+    <% if (typeof error_msg !== 'undefined' && error_msg && error_msg.length > 0) { %>
+      <div class="alert alert-error"><i class="fas fa-exclamation-circle"></i> <%= error_msg %></div>
+    <% } %>
+    <% if (typeof success_msg !== 'undefined' && success_msg && success_msg.length > 0) { %>
+      <div class="alert alert-success"><i class="fas fa-check-circle"></i> <%= success_msg %></div>
+    <% } %>
+
+    <!-- STEP 1: Personal Info -->
+    <div class="step-panel active" id="step-1">
+      <h1 class="reg-title">Create Account</h1>
+      <p class="reg-sub">Fill in your personal details to get started</p>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <div class="input-wrap">
+            <i class="fas fa-user"></i>
+            <input type="text" id="s1-username" class="form-input" placeholder="trader2024">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date of Birth</label>
+          <div class="input-wrap">
+            <i class="fas fa-calendar"></i>
+            <input type="date" id="s1-dob" class="form-input">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <div class="input-wrap">
+          <i class="fas fa-envelope"></i>
+          <input type="email" id="s1-email" class="form-input" placeholder="name@example.com">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Mobile Number</label>
+          <div class="input-wrap">
+            <i class="fas fa-phone"></i>
+            <input type="tel" id="s1-phone" class="form-input" placeholder="+1 234 567 8900">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Currency</label>
+          <div class="input-wrap">
+            <i class="fas fa-dollar-sign"></i>
+            <select id="s1-currency" class="form-input">
+              <option value="">Select currency</option>
+              <option value="USD">USD — US Dollar</option>
+              <option value="EUR">EUR — Euro</option>
+              <option value="GBP">GBP — British Pound</option>
+              <option value="NGN">NGN — Nigerian Naira</option>
+              <option value="BTC">BTC — Bitcoin</option>
+              <option value="ETH">ETH — Ethereum</option>
+              <option value="USDT">USDT — Tether</option>
+              <option value="CAD">CAD — Canadian Dollar</option>
+              <option value="AUD">AUD — Australian Dollar</option>
+              <option value="JPY">JPY — Japanese Yen</option>
+              <option value="ZAR">ZAR — South African Rand</option>
+              <option value="GHS">GHS — Ghanaian Cedi</option>
+              <option value="KES">KES — Kenyan Shilling</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Country</label>
+          <div class="input-wrap">
+            <i class="fas fa-globe"></i>
+            <select id="s1-country" class="form-input">
+              <option value="">Select country</option>
+              <option value="NG">Nigeria</option>
+              <option value="US">United States</option>
+              <option value="GB">United Kingdom</option>
+              <option value="GH">Ghana</option>
+              <option value="KE">Kenya</option>
+              <option value="ZA">South Africa</option>
+              <option value="CA">Canada</option>
+              <option value="AU">Australia</option>
+              <option value="DE">Germany</option>
+              <option value="FR">France</option>
+              <option value="AE">UAE</option>
+              <option value="IN">India</option>
+              <option value="BR">Brazil</option>
+              <option value="OTHER">Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">State / Region</label>
+          <div class="input-wrap">
+            <i class="fas fa-map"></i>
+            <input type="text" id="s1-state" class="form-input" placeholder="Lagos">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">City</label>
+          <div class="input-wrap">
+            <i class="fas fa-city"></i>
+            <input type="text" id="s1-city" class="form-input" placeholder="Lagos">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ZIP / Postal Code</label>
+          <div class="input-wrap">
+            <i class="fas fa-envelope-open"></i>
+            <input type="text" id="s1-zip" class="form-input" placeholder="100001">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Street Address</label>
+        <div class="input-wrap">
+          <i class="fas fa-home"></i>
+          <input type="text" id="s1-address" class="form-input" placeholder="123 Main Street, Suite 4">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <div class="input-wrap">
+          <i class="fas fa-lock"></i>
+          <input type="password" id="s1-password" class="form-input" placeholder="Min 8 chars, uppercase, number & symbol">
+        </div>
+        <small style="color: var(--mist-dim); font-size:12px; margin-top:4px; display:block;">Must contain uppercase, lowercase, number and special character</small>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Confirm Password</label>
+        <div class="input-wrap">
+          <i class="fas fa-lock"></i>
+          <input type="password" id="s1-confirm" class="form-input" placeholder="••••••••">
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-next btn-full" id="btn-step1-next">
+          Continue <i class="fas fa-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 2: ID Upload -->
+    <div class="step-panel" id="step-2">
+      <h1 class="reg-title">Identity Verification</h1>
+      <p class="reg-sub">Upload a government-issued ID to verify your account</p>
+
+      <div class="form-group">
+        <label class="form-label">ID Type</label>
+        <div class="input-wrap">
+          <i class="fas fa-id-card"></i>
+          <select id="s2-idtype" class="form-input">
+            <option value="">Select ID type</option>
+            <option value="passport">International Passport</option>
+            <option value="national_id">National ID Card</option>
+            <option value="drivers_license">Driver's License</option>
+            <option value="voters_card">Voter's Card</option>
+            <option value="residence_permit">Residence Permit</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">ID Number</label>
+        <div class="input-wrap">
+          <i class="fas fa-hashtag"></i>
+          <input type="text" id="s2-idnumber" class="form-input" placeholder="Enter your ID number">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Front of ID</label>
+        <div class="upload-zone" id="upload-front">
+          <input type="file" id="s2-idfront" accept="image/*,.pdf">
+          <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+          <div class="upload-title">Click or drag to upload front of ID</div>
+          <div class="upload-sub">JPG, PNG or PDF — max 5MB</div>
+          <div class="upload-preview" id="preview-front"></div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Back of ID <span style="color: var(--mist-dim); font-size:11px;">(optional for passport)</span></label>
+        <div class="upload-zone" id="upload-back">
+          <input type="file" id="s2-idback" accept="image/*,.pdf">
+          <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+          <div class="upload-title">Click or drag to upload back of ID</div>
+          <div class="upload-sub">JPG, PNG or PDF — max 5MB</div>
+          <div class="upload-preview" id="preview-back"></div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-back" id="btn-step2-back"><i class="fas fa-arrow-left"></i> Back</button>
+        <button class="btn-next" id="btn-step2-next">Continue <i class="fas fa-arrow-right"></i></button>
+      </div>
+    </div>
+
+    <!-- STEP 3: Email Verification + Submit -->
+    <div class="step-panel" id="step-3">
+      <h1 class="reg-title">Verify Your Email</h1>
+      <p class="reg-sub">Enter the 4-digit code sent to your email</p>
+
+      <div class="verify-info">
+        A verification code has been sent to <strong id="display-email">your email</strong>
+      </div>
+
+      <div class="code-inputs">
+        <input type="text" inputmode="numeric" class="code-input" maxlength="1" id="c1">
+        <input type="text" inputmode="numeric" class="code-input" maxlength="1" id="c2">
+        <input type="text" inputmode="numeric" class="code-input" maxlength="1" id="c3">
+        <input type="text" inputmode="numeric" class="code-input" maxlength="1" id="c4">
+      </div>
+
+      <!-- The actual form that POSTs to /register -->
+      <form action="/register" method="POST" enctype="multipart/form-data" id="reg-form">
+        <input type="hidden" name="username"   id="f-username">
+        <input type="hidden" name="email"      id="f-email">
+        <input type="hidden" name="password"   id="f-password">
+        <input type="hidden" name="phone"      id="f-phone">
+        <input type="hidden" name="dob"        id="f-dob">
+        <input type="hidden" name="currency"   id="f-currency">
+        <input type="hidden" name="country"    id="f-country">
+        <input type="hidden" name="state"      id="f-state">
+        <input type="hidden" name="city"       id="f-city">
+        <input type="hidden" name="zip"        id="f-zip">
+        <input type="hidden" name="address"    id="f-address">
+        <input type="hidden" name="idType"     id="f-idtype">
+        <input type="hidden" name="idNumber"   id="f-idnumber">
+        <input type="hidden" name="verifyCode" id="f-code">
+        <input type="file"   name="idFront"    id="f-idfront" style="display:none" accept="image/*,.pdf">
+        <input type="file"   name="idBack"     id="f-idback"  style="display:none" accept="image/*,.pdf">
+
+        <div class="terms-row">
+          <input type="checkbox" id="terms" required>
+          <label for="terms">I agree to the <a href="/terms">Terms of Service</a> and <a href="/privacy">Privacy Policy</a></label>
+        </div>
+
+        <button type="submit" class="btn-next btn-full" id="submit-btn">
+          <i class="fas fa-check-circle"></i> Create Account
+        </button>
+      </form>
+
+      <div class="resend-link" style="margin-top:12px;">
+        Didn't receive it?
+        <button id="resend-btn">Resend code</button>
+        <span id="resend-timer" style="display:none;">Resend in <span id="countdown">60</span>s</span>
+      </div>
+
+      <div class="btn-row" style="margin-top:16px;">
+        <button class="btn-back btn-full" id="btn-step3-back"><i class="fas fa-arrow-left"></i> Back</button>
+      </div>
+    </div>
+
+    <div class="auth-footer">
+      Already have an account? <a href="/login">Sign in</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Store form data between steps
+  var formData = {
+    step1: {},
+    step2: {}
+  };
+
+  // Step navigation function
+  function setStep(n) {
+    document.querySelectorAll('.step-panel').forEach(function(p) {
+      p.classList.remove('active');
+    });
+
+    var currentStep = document.getElementById('step-' + n);
+    if (currentStep) {
+      currentStep.classList.add('active');
+    }
+
+    for (var i = 1; i <= 3; i++) {
+      var el = document.getElementById('prog-' + i);
+      if (el) {
+        el.classList.remove('active', 'done');
+        if (i < n) {
+          el.classList.add('done');
+        }
+        if (i === n) {
+          el.classList.add('active');
+        }
+      }
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function saveStep1Data() {
+    formData.step1 = {
+      username: document.getElementById('s1-username').value.trim(),
+      email: document.getElementById('s1-email').value.trim(),
+      password: document.getElementById('s1-password').value,
+      phone: document.getElementById('s1-phone').value.trim(),
+      dob: document.getElementById('s1-dob').value,
+      currency: document.getElementById('s1-currency').value,
+      country: document.getElementById('s1-country').value,
+      state: document.getElementById('s1-state').value.trim(),
+      city: document.getElementById('s1-city').value.trim(),
+      zip: document.getElementById('s1-zip').value.trim(),
+      address: document.getElementById('s1-address').value.trim()
+    };
+  }
+
+  function saveStep2Data() {
+    formData.step2 = {
+      idType: document.getElementById('s2-idtype').value,
+      idNumber: document.getElementById('s2-idnumber').value.trim(),
+      idFront: document.getElementById('s2-idfront').files[0],
+      idBack: document.getElementById('s2-idback').files[0]
+    };
+  }
+
+  function goStep2() {
+    var username = document.getElementById('s1-username').value.trim();
+    var email = document.getElementById('s1-email').value.trim();
+    var password = document.getElementById('s1-password').value;
+    var confirm = document.getElementById('s1-confirm').value;
+    var dob = document.getElementById('s1-dob').value;
+    var phone = document.getElementById('s1-phone').value.trim();
+    var currency = document.getElementById('s1-currency').value;
+    var country = document.getElementById('s1-country').value;
+
+    if (!username || username.length < 3) {
+      alert('Username must be at least 3 characters');
+      return;
+    }
+    if (!email || !email.includes('@')) {
+      alert('Please enter a valid email');
+      return;
+    }
+    if (!dob) {
+      alert('Please enter your date of birth');
+      return;
+    }
+    if (!phone) {
+      alert('Please enter your mobile number');
+      return;
+    }
+    if (!currency) {
+      alert('Please select a currency');
+      return;
+    }
+    if (!country) {
+      alert('Please select a country');
+      return;
+    }
+    if (password.length < 8) {
+      alert('Password must be at least 8 characters');
+      return;
+    }
+
+    var hasUpper = /[A-Z]/.test(password);
+    var hasLower = /[a-z]/.test(password);
+    var hasNumber = /[0-9]/.test(password);
+    var hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+
+    if (!hasUpper || !hasLower || !hasNumber || !hasSpecial) {
+      alert('Password must contain uppercase, lowercase, number and special character');
+      return;
+    }
+
+    if (password !== confirm) {
+      alert('Passwords do not match');
+      return;
+    }
+
+    saveStep1Data();
+    setStep(2);
+  }
+
+  async function goStep3() {
+    var idType = document.getElementById('s2-idtype').value;
+    var idNumber = document.getElementById('s2-idnumber').value.trim();
+    var idFront = document.getElementById('s2-idfront').files[0];
+
+    if (!idType) {
+      alert('Please select ID type');
+      return;
+    }
+    if (!idNumber) {
+      alert('Please enter ID number');
+      return;
+    }
+    if (!idFront) {
+      alert('Please upload ID front');
+      return;
+    }
+
+    if (idFront.size > 5 * 1024 * 1024) {
+      alert('Front ID file must be less than 5MB');
+      return;
+    }
+
+    var idBack = document.getElementById('s2-idback').files[0];
+    if (idBack && idBack.size > 5 * 1024 * 1024) {
+      alert('Back ID file must be less than 5MB');
+      return;
+    }
+
+    saveStep2Data();
+
+    var btn = document.getElementById('btn-step2-next');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+
+    try {
+      var email = document.getElementById('s1-email').value.trim();
+      var res = await fetch('/register/send-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email })
+      });
+      var data = await res.json();
+
+      if (!data.success) {
+        alert(data.message || 'Failed to send code');
+        btn.disabled = false;
+        btn.innerHTML = 'Continue <i class="fas fa-arrow-right"></i>';
+        return;
+      }
+
+      document.getElementById('display-email').textContent = email;
+      setStep(3);
+      startResendTimer();
+    } catch (err) {
+      alert('Network error. Please try again.');
+      console.error(err);
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = 'Continue <i class="fas fa-arrow-right"></i>';
+  }
+
+  var resendTimer = null;
+  function startResendTimer() {
+    var btn = document.getElementById('resend-btn');
+    var timerSpan = document.getElementById('resend-timer');
+    var countdown = document.getElementById('countdown');
+    var seconds = 60;
+
+    btn.style.display = 'none';
+    timerSpan.style.display = 'inline';
+    countdown.textContent = seconds;
+
+    if (resendTimer) clearInterval(resendTimer);
+
+    resendTimer = setInterval(function() {
+      seconds--;
+      countdown.textContent = seconds;
+      if (seconds <= 0) {
+        clearInterval(resendTimer);
+        btn.style.display = 'inline';
+        timerSpan.style.display = 'none';
+      }
+    }, 1000);
+  }
+
+  function handleFileUpload(inputId, previewId, zoneId) {
+    var input = document.getElementById(inputId);
+    var preview = document.getElementById(previewId);
+    var zone = document.getElementById(zoneId);
+
+    if (!input || !preview || !zone) return;
+
+    input.addEventListener('change', function(e) {
+      var file = e.target.files[0];
+      if (!file) {
+        preview.style.display = 'none';
+        zone.querySelector('.upload-icon').style.display = 'flex';
+        zone.querySelector('.upload-title').style.display = 'block';
+        zone.querySelector('.upload-sub').style.display = 'block';
+        return;
+      }
+
+      preview.style.display = 'block';
+      preview.innerHTML = '';
+      zone.querySelector('.upload-icon').style.display = 'none';
+      zone.querySelector('.upload-title').style.display = 'none';
+      zone.querySelector('.upload-sub').style.display = 'none';
+
+      if (file.type.startsWith('image/')) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          var img = document.createElement('img');
+          img.src = e.target.result;
+          preview.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+      }
+
+      var fileName = document.createElement('div');
+      fileName.className = 'file-name';
+      fileName.textContent = file.name;
+      preview.appendChild(fileName);
+    });
+
+    zone.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      zone.classList.add('dragover');
+    });
+
+    zone.addEventListener('dragleave', function() {
+      zone.classList.remove('dragover');
+    });
+
+    zone.addEventListener('drop', function(e) {
+      e.preventDefault();
+      zone.classList.remove('dragover');
+      var files = e.dataTransfer.files;
+      if (files.length > 0) {
+        input.files = files;
+        input.dispatchEvent(new Event('change'));
+      }
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('btn-step1-next').addEventListener('click', goStep2);
+    document.getElementById('btn-step2-back').addEventListener('click', function() { setStep(1); });
+    document.getElementById('btn-step2-next').addEventListener('click', goStep3);
+    document.getElementById('btn-step3-back').addEventListener('click', function() { setStep(2); });
+
+    handleFileUpload('s2-idfront', 'preview-front', 'upload-front');
+    handleFileUpload('s2-idback', 'preview-back', 'upload-back');
+
+    var codeInputs = ['c1', 'c2', 'c3', 'c4'];
+    codeInputs.forEach(function(id, idx) {
+      var el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('input', function() {
+          this.value = this.value.replace(/[^0-9]/g, '');
+          if (this.value && idx < 3) {
+            document.getElementById(codeInputs[idx + 1]).focus();
+          }
+        });
+
+        el.addEventListener('keydown', function(e) {
+          if (e.key === 'Backspace' && !this.value && idx > 0) {
+            document.getElementById(codeInputs[idx - 1]).focus();
+          }
+        });
+
+        el.addEventListener('paste', function(e) {
+          e.preventDefault();
+          var pasteData = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, 4);
+          for (var i = 0; i < pasteData.length && i < 4; i++) {
+            document.getElementById(codeInputs[i]).value = pasteData[i];
+          }
+          if (pasteData.length < 4) {
+            document.getElementById(codeInputs[pasteData.length]).focus();
+          }
+        });
+      }
+    });
+
+    document.getElementById('resend-btn').addEventListener('click', async function() {
+      if (this.disabled) return;
+
+      this.disabled = true;
+      var email = document.getElementById('s1-email').value.trim();
+
+      try {
+        var res = await fetch('/register/send-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email })
+        });
+        var data = await res.json();
+
+        if (data.success) {
+          startResendTimer();
+        } else {
+          alert(data.message || 'Failed to resend code');
+          this.disabled = false;
+        }
+      } catch (err) {
+        alert('Network error');
+        this.disabled = false;
+      }
+    });
+
+    document.getElementById('reg-form').addEventListener('submit', function(e) {
+      var code =
+        document.getElementById('c1').value +
+        document.getElementById('c2').value +
+        document.getElementById('c3').value +
+        document.getElementById('c4').value;
+
+      if (code.length !== 4 || !/^\d{4}$/.test(code)) {
+        e.preventDefault();
+        alert('Please enter the full 4-digit code');
+        return false;
+      }
+
+      document.getElementById('f-username').value = document.getElementById('s1-username').value.trim();
+      document.getElementById('f-email').value = document.getElementById('s1-email').value.trim();
+      document.getElementById('f-password').value = document.getElementById('s1-password').value;
+      document.getElementById('f-phone').value = document.getElementById('s1-phone').value.trim();
+      document.getElementById('f-dob').value = document.getElementById('s1-dob').value;
+      document.getElementById('f-currency').value = document.getElementById('s1-currency').value;
+      document.getElementById('f-country').value = document.getElementById('s1-country').value;
+      document.getElementById('f-state').value = document.getElementById('s1-state').value.trim();
+      document.getElementById('f-city').value = document.getElementById('s1-city').value.trim();
+      document.getElementById('f-zip').value = document.getElementById('s1-zip').value.trim();
+      document.getElementById('f-address').value = document.getElementById('s1-address').value.trim();
+      document.getElementById('f-idtype').value = document.getElementById('s2-idtype').value;
+      document.getElementById('f-idnumber').value = document.getElementById('s2-idnumber').value.trim();
+      document.getElementById('f-code').value = code;
+
+      var idFrontFile = document.getElementById('s2-idfront').files[0];
+      var idBackFile = document.getElementById('s2-idback').files[0];
+
+      if (idFrontFile) {
+        var dt = new DataTransfer();
+        dt.items.add(idFrontFile);
+        document.getElementById('f-idfront').files = dt.files;
+      }
+
+      if (idBackFile) {
+        var dt2 = new DataTransfer();
+        dt2.items.add(idBackFile);
+        document.getElementById('f-idback').files = dt2.files;
+      }
+
+      document.getElementById('submit-btn').disabled = true;
+      document.getElementById('submit-btn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Account...';
+    });
+  });
+</script>
+<%- include('../partials/footer') %>
