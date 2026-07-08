@@ -1,0 +1,244 @@
+<%- include('../partials/head') %>
+<%- include('../partials/navbar') %>
+
+<style>
+    .logs-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 24px 16px;
+    }
+
+    .page-header {
+        margin-bottom: 32px;
+    }
+
+    .page-title {
+        font-size: 32px;
+        font-weight: 800;
+        color: #f4f4f5;
+        margin-bottom: 8px;
+    }
+
+    .page-subtitle {
+        color: #71717a;
+        font-size: 15px;
+    }
+
+    .back-link {
+        color: #a78bfa;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 16px;
+    }
+
+    .section-card {
+        background: #111118;
+        border: 1px solid #1e1e2e;
+        border-radius: 20px;
+        padding: 24px;
+    }
+
+    .logs-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .logs-table th {
+        color: #71717a;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        text-align: left;
+        padding: 14px 16px;
+        border-bottom: 1px solid #2a2a3e;
+        font-weight: 600;
+    }
+
+    .logs-table td {
+        padding: 14px 16px;
+        border-bottom: 1px solid #1e1e2e;
+        color: #a1a1aa;
+        font-size: 13px;
+    }
+
+    .logs-table tr:hover {
+        background: rgba(139, 92, 246, 0.05);
+    }
+
+    .action-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .action-badge.open_position {
+        background: rgba(34, 197, 94, 0.15);
+        color: #22c55e;
+    }
+
+    .action-badge.close_position {
+        background: rgba(59, 130, 246, 0.15);
+        color: #3b82f6;
+    }
+
+    .action-badge.bulk_close {
+        background: rgba(139, 92, 246, 0.15);
+        color: #a78bfa;
+    }
+
+    .force-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .force-badge.win {
+        background: rgba(34, 197, 94, 0.2);
+        color: #22c55e;
+    }
+
+    .force-badge.loss {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+    }
+
+    .force-badge.none {
+        background: rgba(113, 113, 122, 0.2);
+        color: #71717a;
+    }
+
+    .pnl-positive {
+        color: #22c55e;
+        font-weight: 700;
+    }
+
+    .pnl-negative {
+        color: #ef4444;
+        font-weight: 700;
+    }
+
+    .admin-name {
+        color: #a78bfa;
+        font-weight: 600;
+    }
+
+    .user-name {
+        color: #f4f4f5;
+        font-weight: 600;
+    }
+
+    .date-cell {
+        color: #71717a;
+        font-size: 12px;
+        white-space: nowrap;
+    }
+
+    .notes-cell {
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px;
+        color: #52525b;
+    }
+</style>
+
+<div class="logs-container">
+    <a href="/admin/trade-for-user" class="back-link">← Back to Trade for User</a>
+
+    <div class="page-header">
+        <h1 class="page-title">Admin Trade Logs</h1>
+        <p class="page-subtitle">Complete audit trail of all admin trading activity</p>
+    </div>
+
+    <div class="section-card">
+        <% if (logs.length === 0) { %>
+            <div class="empty-state">
+                <div style="font-size:48px;margin-bottom:16px;">📋</div>
+                <h3>No trade logs yet</h3>
+                <p>Admin trading activity will appear here</p>
+            </div>
+        <% } else { %>
+            <table class="logs-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Admin</th>
+                        <th>User</th>
+                        <th>Action</th>
+                        <th>Pair</th>
+                        <th>Direction</th>
+                        <th>Size</th>
+                        <th>Entry</th>
+                        <th>Exit</th>
+                        <th>P&L</th>
+                        <th>Force</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% logs.forEach(log => { %>
+                        <tr>
+                            <td class="date-cell">
+                                <%= new Date(log.created_at).toLocaleString() %>
+                            </td>
+                            <td>
+                                <span class="admin-name">@<%= log.admin_username %></span>
+                            </td>
+                            <td>
+                                <span class="user-name">@<%= log.target_username %></span>
+                            </td>
+                            <td>
+                                <span class="action-badge <%= log.action %>">
+                                    <%= log.action.replace('_', ' ') %>
+                                </span>
+                            </td>
+                            <td><%= log.pair_symbol %></td>
+                            <td>
+                                <span style="color: <%= log.direction === 'buy' ? '#22c55e' : '#ef4444' %>;font-weight:700;">
+                                    <%= log.direction.toUpperCase() %>
+                                </span>
+                            </td>
+                            <td><%= log.lot_size %> lots</td>
+                            <td><%= log.entry_price ? log.entry_price.toFixed(5) : '-' %></td>
+                            <td><%= log.exit_price ? log.exit_price.toFixed(5) : '-' %></td>
+                            <td>
+                                <% if (log.profit_loss !== null) { %>
+                                    <span class="<%= log.profit_loss >= 0 ? 'pnl-positive' : 'pnl-negative' %>">
+                                        <%= log.profit_loss >= 0 ? '+' : '' %>$<%= parseFloat(log.profit_loss).toFixed(2) %>
+                                    </span>
+                                <% } else { %>
+                                    <span style="color:#52525b;">—</span>
+                                <% } %>
+                            </td>
+                            <td>
+                                <span class="force-badge <%= log.forced_result %>">
+                                    <%= log.forced_result %>
+                                </span>
+                            </td>
+                            <td class="notes-cell" title="<%= log.notes || '' %>">
+                                <%= log.notes || '—' %>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        <% } %>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

