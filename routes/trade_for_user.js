@@ -395,7 +395,7 @@ router.post('/trade-for-user/close-position/:tradeId', ensureAdmin, async (req, 
         if (!trades.length) {
             await connection.rollback();
             req.flash('error', 'Position not found or already closed');
-            return res.redirect('back');
+            return res.redirect(req.get('Referrer') || '/admin/trade-for-user');
         }
 
         const trade = trades[0];
@@ -441,6 +441,9 @@ router.post('/trade-for-user/close-position/:tradeId', ensureAdmin, async (req, 
             }
         }
 
+        // FIX: Use 'manual' to match ENUM('manual','sl','tp','margin_call','liquidation')
+        const closeReason = 'manual';
+
         await connection.execute(`
             UPDATE forex_trades 
             SET status = 'closed',
@@ -449,9 +452,9 @@ router.post('/trade-for-user/close-position/:tradeId', ensureAdmin, async (req, 
                 pips_profit = ?,
                 profit_loss = ?,
                 closed_at = NOW(),
-                close_reason = 'admin_closed'
+                close_reason = ?
             WHERE id = ?
-        `, [currentPrice, currentPrice, pipsProfit, profitLoss, tradeId]);
+        `, [currentPrice, currentPrice, pipsProfit, profitLoss, closeReason, tradeId]);
 
         if (trade.account_type === 'demo') {
             await connection.execute(`
@@ -529,7 +532,7 @@ router.post('/trade-for-user/close-position/:tradeId', ensureAdmin, async (req, 
         await connection.rollback();
         console.error('Admin close position error:', error);
         req.flash('error', 'Failed to close position: ' + error.message);
-        res.redirect('back');
+        res.redirect(req.get('Referrer') || '/admin/trade-for-user');
     } finally {
         connection.release();
     }
@@ -543,7 +546,7 @@ router.post('/trade-for-user/set-force-result/:tradeId', ensureAdmin, async (req
 
         if (!['win', 'loss', 'none'].includes(forced_result)) {
             req.flash('error', 'Invalid force result value');
-            return res.redirect('back');
+            return res.redirect(req.get('Referrer') || '/admin/trade-for-user');
         }
 
         const [trades] = await db.execute(
@@ -553,7 +556,7 @@ router.post('/trade-for-user/set-force-result/:tradeId', ensureAdmin, async (req
 
         if (!trades.length) {
             req.flash('error', 'Trade not found or already closed');
-            return res.redirect('back');
+            return res.redirect(req.get('Referrer') || '/admin/trade-for-user');
         }
 
         await db.execute(
@@ -569,12 +572,12 @@ router.post('/trade-for-user/set-force-result/:tradeId', ensureAdmin, async (req
         });
 
         req.flash('success', `Force ${forced_result.toUpperCase()} set on trade #${tradeId} for ${trades[0].username}`);
-        res.redirect('back');
+        res.redirect(req.get('Referrer') || '/admin/trade-for-user');
 
     } catch (error) {
         console.error('Set force result error:', error);
         req.flash('error', 'Failed to set force result');
-        res.redirect('back');
+        res.redirect(req.get('Referrer') || '/admin/trade-for-user');
     }
 });
 
@@ -648,6 +651,9 @@ router.post('/trade-for-user/bulk-close/:userId', ensureAdmin, async (req, res) 
 
             totalPnL += profitLoss;
 
+            // FIX: Use 'manual' to match ENUM('manual','sl','tp','margin_call','liquidation')
+            const closeReason = 'manual';
+
             await connection.execute(`
                 UPDATE forex_trades 
                 SET status = 'closed',
@@ -656,9 +662,9 @@ router.post('/trade-for-user/bulk-close/:userId', ensureAdmin, async (req, res) 
                     pips_profit = ?,
                     profit_loss = ?,
                     closed_at = NOW(),
-                    close_reason = 'admin_bulk_close'
+                    close_reason = ?
                 WHERE id = ?
-            `, [currentPrice, currentPrice, pipsProfit, profitLoss, trade.id]);
+            `, [currentPrice, currentPrice, pipsProfit, profitLoss, closeReason, trade.id]);
 
             await connection.execute(`
                 INSERT INTO admin_trade_logs 
@@ -706,7 +712,7 @@ router.post('/trade-for-user/bulk-close/:userId', ensureAdmin, async (req, res) 
         await connection.rollback();
         console.error('Bulk close error:', error);
         req.flash('error', 'Failed to bulk close positions: ' + error.message);
-        res.redirect('back');
+        res.redirect(req.get('Referrer') || '/admin/trade-for-user');
     } finally {
         connection.release();
     }
