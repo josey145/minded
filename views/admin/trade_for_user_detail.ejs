@@ -2,426 +2,127 @@
 <%- include('../partials/navbar') %>
 
 <style>
-    .admin-trade-container {
+    .admin-detail-container {
         max-width: 1400px;
         margin: 0 auto;
         padding: 24px 16px;
     }
 
-    .back-link {
-        color: #a78bfa;
-        text-decoration: none;
-        font-size: 14px;
-        font-weight: 600;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        margin-bottom: 16px;
-        transition: color 0.2s;
-    }
-
-    .back-link:hover {
-        color: #c4b5fd;
-    }
-
     .page-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 24px;
-        flex-wrap: wrap;
-        gap: 16px;
-    }
-
-    .page-title-group {
-        flex: 1;
+        margin-bottom: 32px;
     }
 
     .page-title {
-        font-size: 28px;
+        font-size: 32px;
         font-weight: 800;
         color: #f4f4f5;
-        margin-bottom: 4px;
+        margin-bottom: 8px;
+        background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
 
     .page-subtitle {
         color: #71717a;
-        font-size: 14px;
-    }
-
-    .user-tag {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background: #1a1a2e;
-        border: 1px solid #2a2a3e;
-        border-radius: 12px;
-        padding: 12px 20px;
-    }
-
-    .user-tag-avatar {
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #8b5cf6, #6d28d9);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-weight: 700;
-        font-size: 16px;
-    }
-
-    .user-tag-name {
-        color: #f4f4f5;
-        font-weight: 700;
         font-size: 15px;
     }
 
-    .user-tag-type {
-        font-size: 11px;
-        font-weight: 700;
-        text-transform: uppercase;
-        padding: 2px 8px;
-        border-radius: 4px;
+    /* Stats Cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 32px;
     }
 
-    .user-tag-type.real {
-        color: #22c55e;
-        background: rgba(34, 197, 94, 0.15);
-    }
-
-    .user-tag-type.demo {
-        color: #a78bfa;
-        background: rgba(139, 92, 246, 0.15);
-    }
-
-    /* Account Bar */
-    .account-bar {
-        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    .stat-card {
+        background: linear-gradient(135deg, #1a1a2e, #16213e);
         border: 1px solid #2a2a3e;
         border-radius: 16px;
         padding: 24px;
-        margin-bottom: 24px;
+        position: relative;
+        overflow: hidden;
     }
 
-    .account-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-        gap: 20px;
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
     }
 
-    .account-item {
-        text-align: center;
-        padding: 16px;
-        background: rgba(0,0,0,0.2);
-        border-radius: 12px;
-    }
+    .stat-card.balance::before { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
+    .stat-card.equity::before { background: linear-gradient(90deg, #22c55e, #4ade80); }
+    .stat-card.margin::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+    .stat-card.free-margin::before { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
 
-    .account-label {
-        color: #888;
-        font-size: 11px;
+    .stat-label {
+        color: #71717a;
+        font-size: 12px;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 6px;
-    }
-
-    .account-value {
-        color: #fff;
-        font-size: 20px;
-        font-weight: 700;
-        font-family: 'Courier New', monospace;
-    }
-
-    .account-value.positive { color: #22c55e; }
-    .account-value.negative { color: #ef4444; }
-    .account-value.warning { color: #f59e0b; }
-    .account-value.demo { color: #a78bfa; }
-
-    /* Trading Grid */
-    .trading-grid {
-        display: grid;
-        grid-template-columns: 1fr 420px;
-        gap: 24px;
-    }
-
-    @media (max-width: 1024px) {
-        .trading-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    /* Section Cards */
-    .section-card {
-        background: #111118;
-        border: 1px solid #1e1e2e;
-        border-radius: 20px;
-        padding: 24px;
-        margin-bottom: 24px;
-    }
-
-    .section-title {
-        font-size: 18px;
-        font-weight: 700;
-        color: #f4f4f5;
-        margin-bottom: 20px;
-    }
-
-    /* Pairs Grid */
-    .pairs-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-        gap: 12px;
-    }
-
-    .pair-card {
-        background: #0d0d14;
-        border: 2px solid transparent;
-        border-radius: 12px;
-        padding: 16px;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-    .pair-card:hover {
-        border-color: #8b5cf6;
-        background: #1a1a24;
-    }
-
-    .pair-card.active {
-        border-color: #22c55e;
-        background: rgba(34,197,94,0.1);
-    }
-
-    .pair-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 12px;
-    }
-
-    .pair-symbol {
-        font-weight: 700;
-        color: #fff;
-        font-size: 14px;
-    }
-
-    .pair-status {
-        width: 8px;
-        height: 8px;
-        background: #22c55e;
-        border-radius: 50%;
-        animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
-    }
-
-    .pair-prices {
-        display: flex;
-        justify-content: space-between;
+        letter-spacing: 1px;
         margin-bottom: 8px;
     }
 
-    .price-box {
-        text-align: center;
-    }
-
-    .price-label-small {
-        color: #666;
-        font-size: 10px;
-        text-transform: uppercase;
-    }
-
-    .price-value-small {
-        color: #fff;
-        font-size: 16px;
-        font-weight: 600;
+    .stat-value {
+        font-size: 28px;
+        font-weight: 800;
+        color: #f4f4f5;
         font-family: 'Courier New', monospace;
     }
 
-    .price-value-small.bid { color: #ef4444; }
-    .price-value-small.ask { color: #22c55e; }
-
-    .pair-spread {
-        color: #888;
-        font-size: 11px;
-        text-align: center;
-        padding-top: 8px;
-        border-top: 1px solid #2a2a3e;
-    }
-
-    /* Trade Panel */
-    .trade-panel {
+    /* Panels */
+    .panel {
         background: #111118;
         border: 1px solid #1e1e2e;
         border-radius: 20px;
         padding: 24px;
-        height: fit-content;
-        position: sticky;
-        top: 24px;
+        margin-bottom: 24px;
+    }
+
+    .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
     }
 
     .panel-title {
         font-size: 18px;
         font-weight: 700;
         color: #f4f4f5;
-        margin-bottom: 20px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
     }
 
-    .panel-title .admin-badge {
-        background: linear-gradient(135deg, #8b5cf6, #6d28d9);
-        color: white;
-        padding: 4px 10px;
-        border-radius: 6px;
-        font-size: 11px;
-        font-weight: 700;
-        text-transform: uppercase;
-    }
-
-    .selected-pair {
-        background: #0d0d14;
-        border-radius: 12px;
-        padding: 16px;
-        margin-bottom: 20px;
-        text-align: center;
-    }
-
-    .selected-pair-label {
-        color: #666;
-        font-size: 12px;
-        margin-bottom: 4px;
-    }
-
-    .selected-pair-value {
-        color: #fff;
-        font-size: 20px;
-        font-weight: 700;
-    }
-
-    /* Force Result Toggle */
-    .force-section {
-        background: #0d0d14;
-        border: 1px solid #2a2a3e;
-        border-radius: 12px;
-        padding: 16px;
-        margin-bottom: 20px;
-    }
-
-    .force-label {
-        color: #a78bfa;
-        font-size: 12px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 12px;
-    }
-
-    .force-options {
-        display: flex;
-        gap: 8px;
-    }
-
-    .force-option {
-        flex: 1;
-        padding: 12px;
-        border-radius: 10px;
-        border: 2px solid #2a2a3e;
-        background: transparent;
-        color: #71717a;
-        font-size: 13px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.2s;
-        text-align: center;
-    }
-
-    .force-option:hover {
-        border-color: #52525b;
-    }
-
-    .force-option.active[data-value="none"] {
-        border-color: #71717a;
-        color: #f4f4f5;
-        background: rgba(113, 113, 122, 0.1);
-    }
-
-    .force-option.active[data-value="win"] {
-        border-color: #22c55e;
-        color: #22c55e;
-        background: rgba(34, 197, 94, 0.1);
-    }
-
-    .force-option.active[data-value="loss"] {
-        border-color: #ef4444;
-        color: #ef4444;
-        background: rgba(239, 68, 68, 0.1);
-    }
-
-    .direction-tabs {
-        display: flex;
-        gap: 8px;
-        margin-bottom: 20px;
-    }
-
-    .direction-tab {
-        flex: 1;
-        padding: 14px;
-        border-radius: 10px;
-        border: none;
-        font-size: 14px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.2s;
-        text-transform: uppercase;
-    }
-
-    .direction-tab.buy {
-        background: rgba(34,197,94,0.1);
-        color: #22c55e;
-    }
-
-    .direction-tab.buy.active {
-        background: #22c55e;
-        color: white;
-    }
-
-    .direction-tab.sell {
-        background: rgba(239,68,68,0.1);
-        color: #ef4444;
-    }
-
-    .direction-tab.sell.active {
-        background: #ef4444;
-        color: white;
+    /* Trade Form */
+    .trade-form {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
     }
 
     .form-group {
-        margin-bottom: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
     }
 
     .form-label {
-        display: block;
-        font-size: 12px;
-        color: #888;
-        margin-bottom: 6px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+        color: #a1a1aa;
+        font-size: 13px;
+        font-weight: 500;
     }
 
     .form-input, .form-select {
-        width: 100%;
         background: #0d0d14;
         border: 1px solid #2a2a3e;
         border-radius: 10px;
-        padding: 14px;
+        padding: 12px 16px;
         color: #f4f4f5;
-        font-size: 16px;
+        font-size: 14px;
         font-family: 'Courier New', monospace;
     }
 
@@ -430,75 +131,29 @@
         border-color: #8b5cf6;
     }
 
-    .calculation-box {
-        background: #0d0d14;
-        border-radius: 12px;
-        padding: 16px;
-        margin-bottom: 20px;
-    }
-
-    .calc-row {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 8px;
-        font-size: 14px;
-    }
-
-    .calc-row:last-child {
-        margin-bottom: 0;
-        padding-top: 8px;
-        border-top: 1px solid #2a2a3e;
-        font-weight: 700;
-    }
-
-    .calc-label {
-        color: #888;
-    }
-
-    .calc-value {
-        color: #fff;
-        font-family: 'Courier New', monospace;
-    }
-
-    .calc-value.warning {
-        color: #f59e0b;
-    }
-
-    .btn-submit {
-        width: 100%;
-        padding: 18px;
-        border-radius: 12px;
+    .btn-trade {
+        background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+        color: white;
         border: none;
-        font-size: 16px;
+        padding: 14px 32px;
+        border-radius: 10px;
+        font-size: 15px;
         font-weight: 700;
         cursor: pointer;
         transition: all 0.2s;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
     }
 
-    .btn-submit.buy {
-        background: #22c55e;
-        color: white;
+    .btn-trade:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
     }
 
-    .btn-submit.buy:hover {
-        background: #16a34a;
+    .btn-buy {
+        background: linear-gradient(135deg, #22c55e, #16a34a);
     }
 
-    .btn-submit.sell {
-        background: #ef4444;
-        color: white;
-    }
-
-    .btn-submit.sell:hover {
-        background: #dc2626;
-    }
-
-    .btn-submit:disabled {
-        background: #374151;
-        color: #6b7280;
-        cursor: not-allowed;
+    .btn-sell {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
     }
 
     /* Positions Table */
@@ -508,163 +163,108 @@
     }
 
     .positions-table th {
-        color: #888;
+        color: #71717a;
         font-size: 11px;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         text-align: left;
-        padding: 12px;
+        padding: 14px 16px;
         border-bottom: 1px solid #2a2a3e;
+        font-weight: 600;
     }
 
     .positions-table td {
-        padding: 16px 12px;
+        padding: 16px;
         border-bottom: 1px solid #1e1e2e;
+        color: #a1a1aa;
         font-size: 14px;
     }
 
     .positions-table tr:hover {
-        background: rgba(255,255,255,0.02);
+        background: rgba(139, 92, 246, 0.05);
     }
 
     .position-pair {
-        color: #fff;
         font-weight: 700;
+        color: #f4f4f5;
     }
 
-    .position-type {
-        text-transform: uppercase;
-        font-size: 12px;
-        font-weight: 700;
+    .position-direction {
         padding: 4px 10px;
-        border-radius: 4px;
-        display: inline-block;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
     }
 
-    .position-type.buy {
-        background: rgba(34,197,94,0.2);
+    .position-direction.buy {
+        background: rgba(34, 197, 94, 0.2);
         color: #22c55e;
     }
 
-    .position-type.sell {
-        background: rgba(239,68,68,0.2);
+    .position-direction.sell {
+        background: rgba(239, 68, 68, 0.2);
         color: #ef4444;
     }
 
     .position-price {
         font-family: 'Courier New', monospace;
-        color: #fff;
+        font-weight: 600;
     }
 
-    .position-pnl {
-        font-family: 'Courier New', monospace;
-        font-weight: 700;
-    }
-
-    .position-pnl.positive { color: #22c55e; }
-    .position-pnl.negative { color: #ef4444; }
-
-    .force-tag {
-        font-size: 10px;
-        font-weight: 700;
-        text-transform: uppercase;
-        padding: 2px 8px;
-        border-radius: 4px;
-    }
-
-    .force-tag.win {
-        background: rgba(34, 197, 94, 0.2);
+    .position-pnl.positive {
         color: #22c55e;
+        font-weight: 700;
     }
 
-    .force-tag.loss {
-        background: rgba(239, 68, 68, 0.2);
+    .position-pnl.negative {
         color: #ef4444;
+        font-weight: 700;
     }
 
-    .force-tag.none {
-        background: rgba(113, 113, 122, 0.2);
-        color: #71717a;
-    }
-
-    .btn-close-win-sm {
+    .btn-close-win {
         background: rgba(34, 197, 94, 0.15);
         color: #22c55e;
         border: 1px solid rgba(34, 197, 94, 0.3);
-        padding: 6px 12px;
-        border-radius: 6px;
-        font-size: 11px;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 12px;
         font-weight: 700;
         cursor: pointer;
         transition: all 0.2s;
     }
 
-    .btn-close-win-sm:hover {
+    .btn-close-win:hover {
         background: #22c55e;
         color: white;
     }
 
-    .btn-close-loss-sm {
+    .btn-close-loss {
         background: rgba(239, 68, 68, 0.15);
         color: #ef4444;
         border: 1px solid rgba(239, 68, 68, 0.3);
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-close-loss:hover {
+        background: #ef4444;
+        color: white;
+    }
+
+    .btn-force {
+        background: #1e1e2e;
+        color: #a78bfa;
+        border: 1px solid #2a2a3e;
         padding: 6px 12px;
         border-radius: 6px;
-        font-size: 11px;
-        font-weight: 700;
+        font-size: 12px;
+        font-weight: 600;
         cursor: pointer;
-        transition: all 0.2s;
-    }
-
-    .btn-close-loss-sm:hover {
-        background: #ef4444;
-        color: white;
-    }
-
-    /* Bulk Actions */
-    .bulk-actions {
-        display: flex;
-        gap: 12px;
-        margin-bottom: 20px;
-        padding: 16px;
-        background: #0d0d14;
-        border-radius: 12px;
-        border: 1px solid #2a2a3e;
-    }
-
-    .bulk-actions form {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-    }
-
-    .bulk-actions select {
-        background: #1e1e2e;
-        border: 1px solid #2a2a3e;
-        border-radius: 8px;
-        padding: 10px 14px;
-        color: #f4f4f5;
-        font-size: 13px;
-    }
-
-    .btn-bulk {
-        padding: 10px 20px;
-        border-radius: 8px;
-        border: none;
-        font-size: 13px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-    .btn-bulk-win {
-        background: #22c55e;
-        color: white;
-    }
-
-    .btn-bulk-loss {
-        background: #ef4444;
-        color: white;
     }
 
     /* Alert */
@@ -673,6 +273,9 @@
         border-radius: 12px;
         margin-bottom: 24px;
         font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
     }
 
     .alert-success {
@@ -689,46 +292,30 @@
 
     .empty-state {
         text-align: center;
-        padding: 40px;
+        padding: 60px 20px;
         color: #52525b;
     }
 
-    .notes-input {
-        width: 100%;
-        background: #0d0d14;
-        border: 1px solid #2a2a3e;
-        border-radius: 10px;
-        padding: 12px;
-        color: #f4f4f5;
-        font-size: 14px;
-        resize: vertical;
-        min-height: 80px;
-        margin-bottom: 16px;
-    }
-
-    .notes-input:focus {
-        outline: none;
-        border-color: #8b5cf6;
+    /* Mobile */
+    @media (max-width: 768px) {
+        .admin-detail-container { padding: 16px 12px; }
+        .page-title { font-size: 24px; }
+        .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .stat-card { padding: 16px; }
+        .stat-value { font-size: 22px; }
+        .panel { padding: 16px; }
+        .trade-form { grid-template-columns: 1fr; }
+        .positions-table { display: block; overflow-x: auto; }
     }
 </style>
 
-<div class="admin-trade-container">
-    <a href="/admin/trade-for-user" class="back-link">← Back to User List</a>
-
+<div class="admin-detail-container">
     <div class="page-header">
-        <div class="page-title-group">
-            <h1 class="page-title">Trading Dashboard</h1>
-            <p class="page-subtitle">Manage trades and control outcomes for this user</p>
-        </div>
-        <div class="user-tag">
-            <div class="user-tag-avatar"><%= targetUser.username.charAt(0).toUpperCase() %></div>
-            <div>
-                <div class="user-tag-name"><%= targetUser.username %></div>
-                <span class="user-tag-type <%= targetUser.account_type %>">
-                    <%= targetUser.account_type.toUpperCase() %> Account
-                </span>
-            </div>
-        </div>
+        <h1 class="page-title">Trading for <%= targetUser.username %></h1>
+        <p class="page-subtitle">
+            <%= targetUser.account_type === 'demo' ? 'Demo' : 'Real' %> Account | 
+            <%= targetUser.email %>
+        </p>
     </div>
 
     <!-- Flash Messages -->
@@ -739,363 +326,209 @@
         <div class="alert alert-error">❌ <%= error_msg %></div>
     <% } %>
 
-    <!-- Account Info -->
-    <div class="account-bar">
-        <div class="account-grid">
-            <div class="account-item">
-                <div class="account-label"><%= targetUser.account_type === 'demo' ? 'Demo Balance' : 'Real Balance' %></div>
-                <div class="account-value <%= targetUser.account_type === 'demo' ? 'demo' : '' %>">
-                    <%= formatCurrency(account.balance, account.currency) %>
-                </div>
-            </div>
-            <div class="account-item">
-                <div class="account-label">Equity</div>
-                <div class="account-value <%= account.equity >= account.balance ? 'positive' : 'negative' %>">
-                    <%= formatCurrency(account.equity, account.currency) %>
-                </div>
-            </div>
-            <div class="account-item">
-                <div class="account-label">Used Margin</div>
-                <div class="account-value"><%= formatCurrency(account.usedMargin, account.currency) %></div>
-            </div>
-            <div class="account-item">
-                <div class="account-label">Free Margin</div>
-                <div class="account-value <%= account.freeMargin > 100 ? 'positive' : 'warning' %>">
-                    <%= formatCurrency(account.freeMargin, account.currency) %>
-                </div>
-            </div>
-            <div class="account-item">
-                <div class="account-label">Margin Level</div>
-                <div class="account-value <%= account.marginLevel > 100 ? 'positive' : account.marginLevel > 50 ? 'warning' : 'negative' %>">
-                    <%= account.marginLevel.toFixed(1) %>%
-                </div>
-            </div>
-            <div class="account-item">
-                <div class="account-label">Open P&L</div>
-                <div class="account-value <%= account.totalOpenPnL >= 0 ? 'positive' : 'negative' %>">
-                    <%= account.totalOpenPnL >= 0 ? '+' : '' %><%= formatCurrency(account.totalOpenPnL, account.currency) %>
-                </div>
-            </div>
+    <!-- Account Stats -->
+    <div class="stats-grid">
+        <div class="stat-card balance">
+            <div class="stat-label"><%= targetUser.account_type === 'demo' ? 'Demo Balance' : 'Real Balance' %></div>
+            <div class="stat-value"><%= formatCurrency(account.balance, account.currency) %></div>
+        </div>
+        <div class="stat-card equity">
+            <div class="stat-label">Equity</div>
+            <div class="stat-value"><%= formatCurrency(account.equity, account.currency) %></div>
+        </div>
+        <div class="stat-card margin">
+            <div class="stat-label">Used Margin</div>
+            <div class="stat-value"><%= formatCurrency(account.usedMargin, account.currency) %></div>
+        </div>
+        <div class="stat-card free-margin">
+            <div class="stat-label">Free Margin</div>
+            <div class="stat-value"><%= formatCurrency(account.freeMargin, account.currency) %></div>
         </div>
     </div>
 
-    <div class="trading-grid">
-        <!-- Left Column -->
-        <div>
-            <!-- Currency Pairs -->
-            <div class="section-card">
-                <h3 class="section-title">Currency Pairs</h3>
-                <div class="pairs-grid">
+    <!-- Open Trade Form -->
+    <div class="panel">
+        <div class="panel-header">
+            <h3 class="panel-title">Open Position for <%= targetUser.username %></h3>
+        </div>
+        <form action="/admin/trade-for-user/open-position" method="POST" class="trade-form">
+            <input type="hidden" name="user_id" value="<%= targetUser.id %>">
+            <div class="form-group">
+                <label class="form-label">Currency Pair</label>
+                <select name="pair_id" class="form-select" required>
                     <% pairs.forEach(pair => { %>
-                        <div class="pair-card" onclick="selectPair('<%= pair.id %>', '<%= pair.symbol %>', '<%= pair.name %>', <%= pair.bid %>, <%= pair.ask %>)">
-                            <div class="pair-header">
-                                <span class="pair-symbol"><%= pair.symbol %></span>
-                                <span class="pair-status"></span>
-                            </div>
-                            <div class="pair-prices">
-                                <div class="price-box">
-                                    <div class="price-label-small">Bid</div>
-                                    <div class="price-value-small bid"><%= pair.bid.toFixed(5) %></div>
-                                </div>
-                                <div class="price-box">
-                                    <div class="price-label-small">Ask</div>
-                                    <div class="price-value-small ask"><%= pair.ask.toFixed(5) %></div>
-                                </div>
-                            </div>
-                            <div class="pair-spread">Spread: <%= (pair.spread * 10000).toFixed(1) %> pips</div>
-                        </div>
+                        <option value="<%= pair.id %>"><%= pair.name %> (<%= pair.symbol %>)</option>
                     <% }) %>
-                </div>
+                </select>
             </div>
+            <div class="form-group">
+                <label class="form-label">Direction</label>
+                <select name="direction" class="form-select" required>
+                    <option value="buy">Buy (Long)</option>
+                    <option value="sell">Sell (Short)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Lot Size</label>
+                <input type="number" name="lot_size" class="form-input" step="0.01" min="0.01" value="0.10" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Leverage</label>
+                <select name="leverage" class="form-select">
+                    <option value="50">1:50</option>
+                    <option value="100" selected>1:100</option>
+                    <option value="200">1:200</option>
+                    <option value="500">1:500</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Stop Loss (optional)</label>
+                <input type="number" name="stop_loss" class="form-input" step="0.00001">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Take Profit (optional)</label>
+                <input type="number" name="take_profit" class="form-input" step="0.00001">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Force Result</label>
+                <select name="forced_result" class="form-select">
+                    <option value="none">No Force</option>
+                    <option value="win">Force Win</option>
+                    <option value="loss">Force Loss</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Notes</label>
+                <input type="text" name="notes" class="form-input" placeholder="Optional notes...">
+            </div>
+            <div class="form-group" style="display: flex; align-items: flex-end; gap: 12px;">
+                <button type="submit" class="btn-trade btn-buy" style="flex: 1;">Open Buy</button>
+                <button type="submit" class="btn-trade btn-sell" style="flex: 1;">Open Sell</button>
+            </div>
+        </form>
+    </div>
 
-            <!-- Open Positions -->
+    <!-- Open Positions -->
+    <div class="panel">
+        <div class="panel-header">
+            <h3 class="panel-title">Open Positions</h3>
             <% if (openPositions.length > 0) { %>
-            <div class="section-card">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-                    <h3 class="section-title">Open Positions (<%= openPositions.length %>)</h3>
-
-                    <!-- Bulk Close -->
-                    <form action="/admin/trade-for-user/bulk-close/<%= targetUser.id %>" method="POST" 
-                          onsubmit="return confirm('Close ALL open positions for <%= targetUser.username %>?')">
-                        <input type="hidden" name="notes" value="Bulk close by admin">
-                        <div style="display:flex;gap:8px;">
-                            <select name="forced_result_all" style="background:#1e1e2e;border:1px solid #2a2a3e;border-radius:8px;padding:8px 12px;color:#f4f4f5;font-size:13px;">
-                                <option value="">Market Close</option>
-                                <option value="win">Force All Win</option>
-                                <option value="loss">Force All Loss</option>
-                            </select>
-                            <button type="submit" class="btn-bulk btn-bulk-loss">Close All</button>
-                        </div>
-                    </form>
-                </div>
-
-                <table class="positions-table">
-                    <thead>
-                        <tr>
-                            <th>Pair</th>
-                            <th>Type</th>
-                            <th>Size</th>
-                            <th>Entry</th>
-                            <th>P&L ($)</th>
-                            <th>Force</th>
-                            <th colspan="2">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% openPositions.forEach(pos => { %>
-                            <tr>
-                                <td>
-                                    <div class="position-pair"><%= pos.pair_symbol %></div>
-                                    <div style="color:#666;font-size:11px;"><%= pos.pair_name %></div>
-                                </td>
-                                <td>
-                                    <span class="position-type <%= pos.direction %>"><%= pos.direction %></span>
-                                </td>
-                                <td class="position-price"><%= pos.lot_size %> lots</td>
-                                <td class="position-price"><%= pos.entry_price.toFixed(5) %></td>
-                                <td class="position-pnl <%= pos.profit_loss >= 0 ? 'positive' : 'negative' %>">
-                                    <%= pos.profit_loss >= 0 ? '+' : '' %><%= formatCurrency(pos.profit_loss || 0, account.currency) %>
-                                </td>
-                                <td>
-                                    <span class="force-tag <%= pos.forced_result %>"><%= pos.forced_result %></span>
-                                </td>
-                                <td>
-                                    <form action="/admin/trade-for-user/close-position/<%= pos.id %>" method="POST" style="display:inline;">
-                                        <input type="hidden" name="forced_pnl" value="<%= (Math.abs(pos.margin_required * 0.5) + Math.random() * Math.abs(pos.margin_required)).toFixed(2) %>">
-                                        <input type="hidden" name="notes" value="Force win by admin">
-                                        <button type="submit" class="btn-close-win-sm" onclick="return confirm('Close as WIN?')">Win</button>
-                                    </form>
-                                </td>
-                                <td>
-                                    <form action="/admin/trade-for-user/close-position/<%= pos.id %>" method="POST" style="display:inline;">
-                                        <input type="hidden" name="forced_pnl" value="-<%= (Math.abs(pos.margin_required * 0.3) + Math.random() * Math.abs(pos.margin_required * 0.5)).toFixed(2) %>">
-                                        <input type="hidden" name="notes" value="Force loss by admin">
-                                        <button type="submit" class="btn-close-loss-sm" onclick="return confirm('Close as LOSS?')">Loss</button>
-                                    </form>
-                                </td>
-                            </tr>
-                        <% }) %>
-                    </tbody>
-                </table>
-            </div>
-            <% } %>
-
-            <!-- Trade History -->
-            <% if (tradeHistory.length > 0) { %>
-            <div class="section-card">
-                <h3 class="section-title">Recent Trade History</h3>
-                <table class="positions-table">
-                    <thead>
-                        <tr>
-                            <th>Pair</th>
-                            <th>Type</th>
-                            <th>Entry</th>
-                            <th>Exit</th>
-                            <th>P&L</th>
-                            <th>Closed</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% tradeHistory.forEach(trade => { %>
-                            <tr>
-                                <td>
-                                    <div class="position-pair"><%= trade.pair_symbol %></div>
-                                </td>
-                                <td>
-                                    <span class="position-type <%= trade.direction %>"><%= trade.direction %></span>
-                                </td>
-                                <td class="position-price"><%= trade.entry_price.toFixed(5) %></td>
-                                <td class="position-price"><%= trade.exit_price ? trade.exit_price.toFixed(5) : '-' %></td>
-                                <td class="position-pnl <%= trade.profit_loss >= 0 ? 'positive' : 'negative' %>">
-                                    <%= trade.profit_loss >= 0 ? '+' : '' %><%= formatCurrency(trade.profit_loss || 0, account.currency) %>
-                                </td>
-                                <td style="color:#666;font-size:12px;">
-                                    <%= trade.closed_at ? new Date(trade.closed_at).toLocaleDateString() : '-' %>
-                                </td>
-                            </tr>
-                        <% }) %>
-                    </tbody>
-                </table>
-            </div>
-            <% } %>
-        </div>
-
-        <!-- Right Column: Trade Panel -->
-        <div class="trade-panel">
-            <h3 class="panel-title">
-                New Order
-                <span class="admin-badge">ADMIN</span>
-            </h3>
-
-            <div class="selected-pair">
-                <div class="selected-pair-label">Selected Pair</div>
-                <div class="selected-pair-value" id="selectedPairDisplay">--</div>
-            </div>
-
-            <form action="/admin/trade-for-user/open-position" method="POST" id="tradeForm">
-                <input type="hidden" name="user_id" value="<%= targetUser.id %>">
-                <input type="hidden" name="pair_id" id="formPairId">
-
-                <!-- Force Result Control -->
-                <div class="force-section">
-                    <div class="force-label">🎯 Force Result (Admin Only)</div>
-                    <div class="force-options">
-                        <button type="button" class="force-option active" data-value="none" onclick="setForceResult('none')">
-                            No Force
-                        </button>
-                        <button type="button" class="force-option" data-value="win" onclick="setForceResult('win')">
-                            Force Win
-                        </button>
-                        <button type="button" class="force-option" data-value="loss" onclick="setForceResult('loss')">
-                            Force Loss
-                        </button>
-                    </div>
-                    <input type="hidden" name="forced_result" id="forcedResultInput" value="none">
-                </div>
-
-                <!-- Direction -->
-                <div class="direction-tabs">
-                    <button type="button" class="direction-tab buy active" onclick="setDirection('buy')">Buy</button>
-                    <button type="button" class="direction-tab sell" onclick="setDirection('sell')">Sell</button>
-                </div>
-                <input type="hidden" name="direction" id="directionInput" value="buy">
-
-                <!-- Lot Size -->
-                <div class="form-group">
-                    <label class="form-label">Lot Size</label>
-                    <select name="lot_size" class="form-select" id="lotSize" onchange="calculateMargin()">
-                        <option value="0.01">0.01 Micro (1,000 units)</option>
-                        <option value="0.1">0.1 Mini (10,000 units)</option>
-                        <option value="1" selected>1.0 Standard (100,000 units)</option>
-                        <option value="2">2.0 (200,000 units)</option>
-                        <option value="5">5.0 (500,000 units)</option>
-                        <option value="10">10.0 (1,000,000 units)</option>
-                    </select>
-                </div>
-
-                <!-- Leverage -->
-                <div class="form-group">
-                    <label class="form-label">Leverage</label>
-                    <select name="leverage" class="form-select" id="leverage" onchange="calculateMargin()">
-                        <option value="50">1:50</option>
-                        <option value="100" selected>1:100</option>
-                        <option value="200">1:200</option>
-                        <option value="500">1:500</option>
-                    </select>
-                </div>
-
-                <!-- Stop Loss -->
-                <div class="form-group">
-                    <label class="form-label">Stop Loss (optional)</label>
-                    <input type="number" name="stop_loss" class="form-input" step="0.00001" placeholder="0.00000">
-                </div>
-
-                <!-- Take Profit -->
-                <div class="form-group">
-                    <label class="form-label">Take Profit (optional)</label>
-                    <input type="number" name="take_profit" class="form-input" step="0.00001" placeholder="0.00000">
-                </div>
-
-                <!-- Admin Notes -->
-                <div class="form-group">
-                    <label class="form-label">Admin Notes</label>
-                    <textarea name="notes" class="notes-input" placeholder="Optional notes for this trade..."></textarea>
-                </div>
-
-                <!-- Calculations -->
-                <div class="calculation-box">
-                    <div class="calc-row">
-                        <span class="calc-label">Contract Size:</span>
-                        <span class="calc-value" id="contractSize">100,000</span>
-                    </div>
-                    <div class="calc-row">
-                        <span class="calc-label">Pip Value:</span>
-                        <span class="calc-value" id="pipValue">$10.00</span>
-                    </div>
-                    <div class="calc-row">
-                        <span class="calc-label">Margin Required:</span>
-                        <span class="calc-value" id="marginRequired">$1,000.00</span>
-                    </div>
-                    <div class="calc-row">
-                        <span class="calc-label">Min Required:</span>
-                        <span class="calc-value warning" id="minRequired">$10.00 minimum</span>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn-submit buy" id="submitBtn" disabled>
-                    Open Position for <%= targetUser.username %>
-                </button>
+            <form action="/admin/trade-for-user/bulk-close/<%= targetUser.id %>" method="POST" style="display: inline;">
+                <input type="hidden" name="forced_result_all" value="none">
+                <button type="submit" class="btn-force" onclick="return confirm('Close ALL positions for <%= targetUser.username %>?')">Close All</button>
             </form>
+            <% } %>
         </div>
+        <% if (openPositions.length > 0) { %>
+        <table class="positions-table">
+            <thead>
+                <tr>
+                    <th>Pair</th>
+                    <th>Direction</th>
+                    <th>Lots</th>
+                    <th>Entry Price</th>
+                    <th>Current</th>
+                    <th>P&L</th>
+                    <th>Force</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% openPositions.forEach(pos => { %>
+                    <% const pnl = parseFloat(pos.profit_loss) || 0; %>
+                    <% const entryPrice = parseFloat(pos.entry_price) || 0; %>
+                    <% const currentPrice = parseFloat(pos.current_price) || 0; %>
+                    <tr>
+                        <td class="position-pair"><%= pos.pair_symbol %></td>
+                        <td>
+                            <span class="position-direction <%= pos.direction %>"><%= pos.direction %></span>
+                        </td>
+                        <td class="position-price"><%= pos.lot_size %> lots</td>
+                        <td class="position-price"><%= entryPrice.toFixed(5) %></td>
+                        <td class="position-price"><%= currentPrice.toFixed(5) %></td>
+                        <td class="position-pnl <%= pnl >= 0 ? 'positive' : 'negative' %>">
+                            <%= pnl >= 0 ? '+' : '' %><%= formatCurrency(pnl, account.currency) %>
+                        </td>
+                        <td>
+                            <form action="/admin/trade-for-user/set-force-result/<%= pos.id %>" method="POST" style="display: flex; gap: 4px;">
+                                <select name="forced_result" class="form-select" style="font-size: 11px; padding: 4px 8px;">
+                                    <option value="none" <%= pos.forced_result === 'none' ? 'selected' : '' %>>None</option>
+                                    <option value="win" <%= pos.forced_result === 'win' ? 'selected' : '' %>>Win</option>
+                                    <option value="loss" <%= pos.forced_result === 'loss' ? 'selected' : '' %>>Loss</option>
+                                </select>
+                                <button type="submit" class="btn-force">Set</button>
+                            </form>
+                        </td>
+                        <td style="display: flex; gap: 8px;">
+                            <form action="/admin/trade-for-user/close-position/<%= pos.id %>" method="POST" style="display: inline;">
+                                <input type="hidden" name="forced_pnl" value="<%= Math.abs((parseFloat(pos.margin_required) || 0) * 0.5 + Math.random() * (parseFloat(pos.margin_required) || 0)).toFixed(2) %>">
+                                <input type="hidden" name="notes" value="Force win closed by admin">
+                                <button type="submit" class="btn-close-win" onclick="return confirm('Close as WIN?')">✓ Win</button>
+                            </form>
+                            <form action="/admin/trade-for-user/close-position/<%= pos.id %>" method="POST" style="display: inline;">
+                                <input type="hidden" name="forced_pnl" value="-<%= Math.abs((parseFloat(pos.margin_required) || 0) * 0.3 + Math.random() * (parseFloat(pos.margin_required) || 0) * 0.5).toFixed(2) %>">
+                                <input type="hidden" name="notes" value="Force loss closed by admin">
+                                <button type="submit" class="btn-close-loss" onclick="return confirm('Close as LOSS?')">✗ Loss</button>
+                            </form>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+        <% } else { %>
+        <div class="empty-state">
+            <div style="font-size: 48px; margin-bottom: 16px;">📈</div>
+            <p>No open positions for this user.</p>
+        </div>
+        <% } %>
+    </div>
+
+    <!-- Trade History -->
+    <div class="panel">
+        <div class="panel-header">
+            <h3 class="panel-title">Trade History</h3>
+        </div>
+        <% if (tradeHistory.length > 0) { %>
+        <table class="positions-table">
+            <thead>
+                <tr>
+                    <th>Pair</th>
+                    <th>Direction</th>
+                    <th>Entry</th>
+                    <th>Exit</th>
+                    <th>P&L</th>
+                    <th>Closed</th>
+                    <th>Reason</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% tradeHistory.forEach(trade => { %>
+                    <% const pnl = parseFloat(trade.profit_loss) || 0; %>
+                    <% const entryPrice = parseFloat(trade.entry_price) || 0; %>
+                    <% const exitPrice = parseFloat(trade.exit_price) || 0; %>
+                    <tr>
+                        <td class="position-pair"><%= trade.pair_symbol %></td>
+                        <td>
+                            <span class="position-direction <%= trade.direction %>"><%= trade.direction %></span>
+                        </td>
+                        <td class="position-price"><%= entryPrice.toFixed(5) %></td>
+                        <td class="position-price"><%= exitPrice.toFixed(5) %></td>
+                        <td class="position-pnl <%= pnl >= 0 ? 'positive' : 'negative' %>">
+                            <%= pnl >= 0 ? '+' : '' %><%= formatCurrency(pnl, account.currency) %>
+                        </td>
+                        <td><%= new Date(trade.closed_at).toLocaleDateString() %></td>
+                        <td><%= trade.close_reason || 'User closed' %></td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+        <% } else { %>
+        <div class="empty-state">
+            <div style="font-size: 48px; margin-bottom: 16px;">📋</div>
+            <p>No trade history yet.</p>
+        </div>
+        <% } %>
     </div>
 </div>
 
 <%- include('../partials/footer') %>
-
-<script>
-    let selectedPair = null;
-    let currentDirection = 'buy';
-    let currentForceResult = 'none';
-
-    function selectPair(id, symbol, name, bid, ask) {
-        selectedPair = { id, symbol, name, bid, ask };
-
-        document.getElementById('formPairId').value = id;
-        document.getElementById('selectedPairDisplay').textContent = symbol;
-        document.getElementById('submitBtn').disabled = false;
-
-        document.querySelectorAll('.pair-card').forEach(c => c.classList.remove('active'));
-        event.currentTarget.classList.add('active');
-
-        calculateMargin();
-    }
-
-    function setDirection(dir) {
-        currentDirection = dir;
-        document.getElementById('directionInput').value = dir;
-
-        document.querySelectorAll('.direction-tab').forEach(t => t.classList.remove('active'));
-        document.querySelector('.direction-tab.' + dir).classList.add('active');
-
-        const btn = document.getElementById('submitBtn');
-        btn.className = 'btn-submit ' + dir;
-        btn.textContent = 'Open ' + dir.toUpperCase() + ' for <%= targetUser.username %>';
-    }
-
-    function setForceResult(result) {
-        currentForceResult = result;
-        document.getElementById('forcedResultInput').value = result;
-
-        document.querySelectorAll('.force-option').forEach(opt => opt.classList.remove('active'));
-        document.querySelector('.force-option[data-value="' + result + '"]').classList.add('active');
-    }
-
-    function calculateMargin() {
-        if (!selectedPair) return;
-
-        const lotSize = parseFloat(document.getElementById('lotSize').value);
-        const leverage = parseInt(document.getElementById('leverage').value);
-        const contractSize = lotSize * 100000;
-        const marginRequired = contractSize / leverage;
-        const pipValue = lotSize * 10;
-
-        document.getElementById('contractSize').textContent = contractSize.toLocaleString();
-        document.getElementById('pipValue').textContent = '$' + pipValue.toFixed(2);
-        document.getElementById('marginRequired').textContent = '$' + marginRequired.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-
-        // Highlight if below $10
-        const minEl = document.getElementById('minRequired');
-        if (marginRequired < 10) {
-            minEl.textContent = '⚠️ Below $10 minimum!';
-            minEl.style.color = '#ef4444';
-        } else {
-            minEl.textContent = '✓ Above $10 minimum';
-            minEl.style.color = '#22c55e';
-        }
-    }
-
-    // Initialize
-    document.addEventListener('DOMContentLoaded', () => {
-        calculateMargin();
-    });
-</script>
