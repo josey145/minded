@@ -387,8 +387,9 @@ router.post('/trade-for-user/close-position/:tradeId', ensureAdmin, async (req, 
 
         await connection.beginTransaction();
 
+        // FIXED: Single quotes for 'open'
         const [trades] = await connection.execute(
-            'SELECT t.*, u.username, u.account_type, u.balance, u.demo_balance, u.email FROM forex_trades t JOIN users u ON t.user_id = u.id WHERE t.id = ? AND t.status = "open"',
+            'SELECT t.*, u.username, u.account_type, u.balance, u.demo_balance, u.email FROM forex_trades t JOIN users u ON t.user_id = u.id WHERE t.id = ? AND t.status = \'open\'',
             [tradeId]
         );
 
@@ -441,7 +442,6 @@ router.post('/trade-for-user/close-position/:tradeId', ensureAdmin, async (req, 
             }
         }
 
-        // FIX: Use 'manual' to match ENUM('manual','sl','tp','margin_call','liquidation')
         const closeReason = 'manual';
 
         await connection.execute(`
@@ -549,8 +549,9 @@ router.post('/trade-for-user/set-force-result/:tradeId', ensureAdmin, async (req
             return res.redirect(req.get('Referrer') || '/admin/trade-for-user');
         }
 
+        // FIXED: Single quotes for 'open'
         const [trades] = await db.execute(
-            'SELECT t.*, u.username FROM forex_trades t JOIN users u ON t.user_id = u.id WHERE t.id = ? AND t.status = "open"',
+            'SELECT t.*, u.username FROM forex_trades t JOIN users u ON t.user_id = u.id WHERE t.id = ? AND t.status = \'open\'',
             [tradeId]
         );
 
@@ -604,8 +605,9 @@ router.post('/trade-for-user/bulk-close/:userId', ensureAdmin, async (req, res) 
 
         const targetUser = users[0];
 
+        // FIXED: Single quotes for 'open'
         const [openTrades] = await connection.execute(
-            'SELECT * FROM forex_trades WHERE user_id = ? AND status = "open"',
+            'SELECT * FROM forex_trades WHERE user_id = ? AND status = \'open\'',
             [userId]
         );
 
@@ -651,7 +653,6 @@ router.post('/trade-for-user/bulk-close/:userId', ensureAdmin, async (req, res) 
 
             totalPnL += profitLoss;
 
-            // FIX: Use 'manual' to match ENUM('manual','sl','tp','margin_call','liquidation')
             const closeReason = 'manual';
 
             await connection.execute(`

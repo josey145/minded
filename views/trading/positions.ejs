@@ -1,0 +1,230 @@
+<%- include('../partials/head') %>
+<%- include('../partials/navbar') %>
+
+<style>
+    .positions-container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; flex-wrap: wrap; gap: 16px; }
+    .page-header h2 { color: #ffffff; font-size: 28px; margin: 0; }
+    
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .stat-card { background-color: #111118; border: 1px solid #1e1e2e; border-radius: 16px; padding: 24px; }
+    .stat-card .label { font-size: 12px; color: #a1a1aa; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .stat-card .value { font-size: 24px; font-weight: 700; color: #ffffff; }
+    .stat-card .value.positive { color: #22c55e; }
+    .stat-card .value.negative { color: #ef4444; }
+    
+    .positions-card { background-color: #111118; border: 1px solid #1e1e2e; border-radius: 16px; overflow-x: auto; }
+    .positions-table { width: 100%; border-collapse: collapse; color: #f4f4f5; }
+    .positions-table th { background-color: rgba(139, 92, 246, 0.05); padding: 16px; text-align: left; font-size: 12px; color: #a1a1aa; text-transform: uppercase; letter-spacing: 0.5px; }
+    .positions-table td { padding: 16px; border-bottom: 1px solid #1e1e2e; font-size: 14px; }
+    .positions-table tr:hover { background-color: rgba(139, 92, 246, 0.03); }
+    .positions-table tr:last-child td { border-bottom: none; }
+    
+    .asset-cell { display: flex; align-items: center; gap: 12px; }
+    .asset-icon { width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; color: #ffffff; }
+    
+    .side-badge { padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; text-transform: uppercase; }
+    .side-buy { background-color: rgba(34, 197, 94, 0.1); color: #22c55e; }
+    .side-sell { background-color: rgba(239, 68, 68, 0.1); color: #ef4444; }
+    
+    .pnl-badge { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+    .pnl-positive { background-color: rgba(34, 197, 94, 0.1); color: #22c55e; }
+    .pnl-negative { background-color: rgba(239, 68, 68, 0.1); color: #ef4444; }
+    
+    .close-btn { background-color: #ef4444; color: #ffffff; border: none; padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .close-btn:hover { background-color: #dc2626; transform: translateY(-1px); }
+    
+    .empty-state { text-align: center; padding: 64px 20px; color: #a1a1aa; }
+    .empty-state svg { width: 64px; height: 64px; margin-bottom: 16px; opacity: 0.3; }
+    .empty-state h3 { color: #ffffff; margin-bottom: 8px; font-size: 18px; }
+    
+    .live-indicator { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: #22c55e; margin-top: 6px; }
+    .live-dot { width: 8px; height: 8px; background-color: #22c55e; border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    
+    .nav-btn { background-color: #1e1e2e; color: #a1a1aa; text-decoration: none; padding: 10px 20px; border-radius: 10px; font-size: 14px; font-weight: 500; transition: all 0.2s; border: 1px solid transparent; }
+    .nav-btn:hover { background-color: #27273a; color: #ffffff; }
+    .nav-btn.primary { background-color: #8b5cf6; color: #ffffff; }
+    .nav-btn.primary:hover { background-color: #7c3aed; }
+    
+    .sl-tp { font-size: 12px; color: #52525b; margin-top: 4px; }
+    .sl-tp span { color: #a1a1aa; }
+    
+    .price-change { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; }
+    .price-change.up { color: #22c55e; }
+    .price-change.down { color: #ef4444; }
+</style>
+
+<div class="positions-container">
+    <div class="page-header">
+        <div>
+            <h2>Open Positions</h2>
+            <div class="live-indicator">
+                <span class="live-dot"></span>
+                <span>Live Market Data</span>
+            </div>
+        </div>
+        <div style="display: flex; gap: 12px;">
+            <a href="/trading" class="nav-btn">← Dashboard</a>
+            <a href="/trading" class="nav-btn primary">New Trade</a>
+        </div>
+    </div>
+
+    <!-- Portfolio Stats -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="label">Account Balance</div>
+            <div class="value"><%= formatCurrency(account.balance, account.currency) %></div>
+        </div>
+        <div class="stat-card">
+            <div class="label">Equity</div>
+            <div class="value"><%= formatCurrency(account.equity, account.currency) %></div>
+        </div>
+        <div class="stat-card">
+            <div class="label">Unrealized P&L</div>
+            <div class="value <%= account.totalOpenPnL >= 0 ? 'positive' : 'negative' %>">
+                <%= account.totalOpenPnL >= 0 ? '+' : '' %><%= formatCurrency(Math.abs(account.totalOpenPnL), account.currency) %>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="label">Open Positions</div>
+            <div class="value"><%= openCount %></div>
+        </div>
+        <div class="stat-card">
+            <div class="label">Used Margin</div>
+            <div class="value"><%= formatCurrency(account.usedMargin, account.currency) %></div>
+        </div>
+        <div class="stat-card">
+            <div class="label">Free Margin</div>
+            <div class="value"><%= formatCurrency(account.freeMargin, account.currency) %></div>
+        </div>
+    </div>
+
+    <!-- Positions Table -->
+    <div class="positions-card">
+        <table class="positions-table">
+            <thead>
+                <tr>
+                    <th>Pair</th>
+                    <th>Side</th>
+                    <th>Size</th>
+                    <th>Entry Price</th>
+                    <th>Current Price</th>
+                    <th>Pips</th>
+                    <th>P&L</th>
+                    <th>Margin</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="positionsBody">
+                <% if (positions && positions.length > 0) { %>
+                    <% positions.forEach(pos => { 
+                        const priceDiff = pos.direction === 'buy' 
+                            ? pos.current_price - pos.entry_price 
+                            : pos.entry_price - pos.current_price;
+                    %>
+                        <tr data-position-id="<%= pos.id %>" data-symbol="<%= pos.pair_symbol %>">
+                            <td>
+                                <div class="asset-cell">
+                                    <div class="asset-icon"><%= pos.pair_symbol.substring(0, 2) %></div>
+                                    <div>
+                                        <div style="font-weight: 600; color: #ffffff;"><%= pos.pair_symbol %></div>
+                                        <div style="font-size: 12px; color: #a1a1aa;"><%= pos.pair_name %></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="side-badge side-<%= pos.direction %>"><%= pos.direction %></span>
+                            </td>
+                            <td><%= pos.lot_size %> lots</td>
+                            <td><%= pos.entry_price %></td>
+                            <td>
+                                <span class="current-price" data-symbol="<%= pos.pair_symbol %>" data-direction="<%= pos.direction %>">
+                                    <%= pos.current_price %>
+                                </span>
+                                <div class="price-change <%= priceDiff >= 0 ? 'up' : 'down' %>">
+                                    <%= priceDiff >= 0 ? '▲' : '▼' %> <%= Math.abs(priceDiff).toFixed(5) %>
+                                </div>
+                            </td>
+                            <td class="<%= parseFloat(pos.pips_profit) >= 0 ? 'positive' : 'negative' %>">
+                                <%= parseFloat(pos.pips_profit) >= 0 ? '+' : '' %><%= pos.pips_profit %>
+                            </td>
+                            <td>
+                                <span class="pnl-badge <%= parseFloat(pos.profit_loss) >= 0 ? 'pnl-positive' : 'pnl-negative' %>">
+                                    <%= parseFloat(pos.profit_loss) >= 0 ? '+' : '' %>$<%= Math.abs(parseFloat(pos.profit_loss)).toFixed(2) %>
+                                </span>
+                            </td>
+                            <td>$<%= parseFloat(pos.margin_required).toFixed(2) %></td>
+                            <td>
+                                <div style="display: flex; flex-direction: column; gap: 6px;">
+                                    <% if (pos.stop_loss) { %>
+                                        <div class="sl-tp">SL: <span><%= pos.stop_loss %></span></div>
+                                    <% } %>
+                                    <% if (pos.take_profit) { %>
+                                        <div class="sl-tp">TP: <span><%= pos.take_profit %></span></div>
+                                    <% } %>
+                                    <form action="/trading/positions/<%= pos.id %>/close" method="POST" style="margin-top: 4px;">
+                                        <button type="submit" class="close-btn" onclick="return confirm('Close <%= pos.pair_symbol %> <%= pos.direction %> position?')">Close</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    <% }) %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="9">
+                            <div class="empty-state">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M3 3v18h18"/>
+                                    <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
+                                </svg>
+                                <h3>No Open Positions</h3>
+                                <p>Your trading positions will appear here. Start trading to see them.</p>
+                                <a href="/trading" class="nav-btn primary" style="display: inline-block; margin-top: 16px;">Place First Trade</a>
+                            </div>
+                        </td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // Auto-refresh prices every 3 seconds
+    async function refreshPrices() {
+        try {
+            const response = await fetch('/trading/api/prices');
+            const prices = await response.json();
+            
+            prices.forEach(p => {
+                const cells = document.querySelectorAll(`.current-price[data-symbol="${p.symbol}"]`);
+                cells.forEach(cell => {
+                    const oldPrice = parseFloat(cell.textContent);
+                    const newPrice = parseFloat(p.bid);
+                    const direction = cell.getAttribute('data-direction');
+                    
+                    cell.textContent = newPrice.toFixed(5);
+                    
+                    // Flash color on price change
+                    if (newPrice > oldPrice) {
+                        cell.style.color = '#22c55e';
+                    } else if (newPrice < oldPrice) {
+                        cell.style.color = '#ef4444';
+                    }
+                    setTimeout(() => cell.style.color = '', 800);
+                });
+            });
+        } catch (err) {
+            console.log('Price refresh failed:', err);
+        }
+    }
+    
+    // Refresh every 3 seconds
+    setInterval(refreshPrices, 3000);
+    
+    // Initial refresh
+    refreshPrices();
+</script>
+
+<%- include('../partials/footer') %>

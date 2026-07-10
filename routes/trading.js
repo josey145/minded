@@ -28,11 +28,9 @@ const getMarginLevel = (user, totalOpenPnL) => {
     const usedMargin = parseFloat(user.used_margin) || 0;
     if (usedMargin <= 0) return 0;
     const level = (equity / usedMargin) * 100;
-    // Cap at 999.99 to be safe for most DECIMAL(5,2) columns
     return Math.min(level, 999.99);
 };
 
-// Helper to safely cap numeric values for DB storage
 const safeDbValue = (value, maxVal, minVal = 0) => {
     const num = parseFloat(value) || 0;
     if (isNaN(num)) return minVal;
@@ -47,8 +45,6 @@ const safeDbValue = (value, maxVal, minVal = 0) => {
 router.get('/', ensureAuthenticated, async (req, res) => {
     try {
         const userId = req.session.user.id;
-
-        // Get account_type from session first, fallback to DB
         let accountType = req.session.user.account_type;
 
         const [users] = await db.execute(`
@@ -69,7 +65,6 @@ router.get('/', ensureAuthenticated, async (req, res) => {
             email: ''
         };
 
-        // Sync session with DB account_type
         if (userData.account_type && !accountType) {
             accountType = userData.account_type;
             req.session.user.account_type = accountType;
@@ -79,7 +74,6 @@ router.get('/', ensureAuthenticated, async (req, res) => {
             await db.execute('UPDATE users SET account_type = ? WHERE id = ?', ['demo', userId]);
         }
 
-        // Ensure demo_balance exists
         if (userData.demo_balance === null || userData.demo_balance === undefined) {
             await db.execute('UPDATE users SET demo_balance = ? WHERE id = ?', [10000.00, userId]);
             userData.demo_balance = 10000.00;
@@ -121,7 +115,6 @@ router.get('/', ensureAuthenticated, async (req, res) => {
             change_24h: parseFloat(p.change_24h) || 0
         }));
 
-        // Parse position data to ensure numbers
         const parsedPositions = openPositions.map(pos => ({
             ...pos,
             entry_price: parseFloat(pos.entry_price) || 0,
@@ -139,11 +132,9 @@ router.get('/', ensureAuthenticated, async (req, res) => {
         const effectiveFreeMargin = getEffectiveFreeMargin(userData, totalOpenPnL);
         const marginLevel = getMarginLevel(userData, totalOpenPnL);
 
-        // Safely cap all values before DB update
         const safeFreeMargin = safeDbValue(effectiveFreeMargin, 999999999.99);
         const safeMarginLevel = safeDbValue(marginLevel, 999.99);
 
-        // Update user's free_margin and margin_level in DB
         try {
             await db.execute(`
                 UPDATE users 
@@ -151,9 +142,7 @@ router.get('/', ensureAuthenticated, async (req, res) => {
                 WHERE id = ?
             `, [safeFreeMargin, safeMarginLevel, userId]);
         } catch (dbError) {
-            console.error('DB Update error (non-critical):', dbError.message, 
-                'Values:', { safeFreeMargin, safeMarginLevel, userId });
-            // Don't fail the page load for this
+            console.error('DB Update error (non-critical):', dbError.message);
         }
 
         res.render('trading/forex', {
@@ -191,6 +180,104 @@ router.get('/', ensureAuthenticated, async (req, res) => {
     }
 });
 
+// GET /trading/positions - Dedicated positions page
+router.get('/positions', ensureAuthenticated, async (req, res) => {
+    try {
+        const userId = req.session.user.id;
+
+        const [users] = await db.execute(`
+            SELECT balance, demo_balance, margin_balance, equity, used_margin, free_margin, 
+                   margin_level_percent, leverage, currency, account_type, trading_mode, role,
+                   username, email
+            FROM users WHERE id = ?
+        `, [userId]);
+
+        const userData = users[0] || { 
+            balance: 0, demo_balance: 10000, currency: 'USD', account_type: 'demo',
+            used_margin: 0, free_margin: 0, margin_level_percent: 0
+        };
+
+        const [openPositions] = await db.execute(`
+            SELECT t.*, p.name as pair_name, p.pip_value, p.bid, p.ask
+            FROM forex_trades t
+            JOIN forex_pairs p ON t.pair_id = p.id
+            WHERE t.user_id = ? AND t.status = 'open'
+            ORDER BY t.opened_at DESC
+        `, [userId]);
+
+        let totalOpenPnL = 0;
+        let totalExposure = 0;
+        let marginUsed = parseFloat(userData.used_margin) || 0;
+
+        const parsedPositions = openPositions.map(pos => {
+            const entryPrice = parseFloat(pos.entry_price) || 0;
+            const currentPrice = pos.direction === 'buy' 
+                ? (parseFloat(pos.ask) || entryPrice) 
+                : (parseFloat(pos.bid) || entryPrice);
+            const lotSize = parseFloat(pos.lot_size) || 0;
+            const contractValue = lotSize * 100000;
+            const pipSize = pos.pair_symbol.includes('JPY') ? 0.01 : 0.0001;
+            
+            let pipsProfit, profitLoss;
+            if (pos.direction === 'buy') {
+                pipsProfit = (currentPrice - entryPrice) / pipSize;
+            } else {
+                pipsProfit = (entryPrice - currentPrice) / pipSize;
+            }
+            const pipValue = lotSize * 10;
+            profitLoss = pipsProfit * pipValue;
+
+            totalOpenPnL += profitLoss;
+            totalExposure += contractValue;
+
+            return {
+                ...pos,
+                entry_price: entryPrice,
+                current_price: currentPrice,
+                lot_size: lotSize,
+                pips_profit: pipsProfit.toFixed(2),
+                profit_loss: profitLoss.toFixed(2),
+                pnl_percent: entryPrice > 0 ? ((profitLoss / (entryPrice * lotSize * 100000)) * 100).toFixed(2) : '0.00',
+                margin_required: parseFloat(pos.margin_required) || 0,
+                stop_loss: pos.stop_loss ? parseFloat(pos.stop_loss) : null,
+                take_profit: pos.take_profit ? parseFloat(pos.take_profit) : null
+            };
+        });
+
+        const effectiveBalance = getEffectiveBalance(userData);
+        const effectiveEquity = getEffectiveEquity(userData, totalOpenPnL);
+        const effectiveFreeMargin = getEffectiveFreeMargin(userData, totalOpenPnL);
+        const marginLevel = getMarginLevel(userData, totalOpenPnL);
+
+        res.render('trading/positions', {
+            title: 'Open Positions - Maximum',
+            user: req.session.user,
+            account: {
+                balance: effectiveBalance,
+                equity: effectiveEquity,
+                usedMargin: marginUsed,
+                freeMargin: effectiveFreeMargin,
+                marginLevel: marginLevel,
+                currency: userData.currency || 'USD',
+                totalOpenPnL: totalOpenPnL,
+                accountType: userData.account_type || 'demo'
+            },
+            positions: parsedPositions,
+            totalExposure: totalExposure,
+            unrealizedPnL: totalOpenPnL,
+            openCount: parsedPositions.length,
+            formatCurrency: formatCurrency
+        });
+
+    } catch (error) {
+        console.error('Positions page error:', error);
+        res.status(500).render('error', {
+            title: 'Error',
+            message: 'Failed to load positions: ' + error.message
+        });
+    }
+});
+
 // POST /trading/open-position
 router.post('/open-position', ensureAuthenticated, async (req, res) => {
     const connection = await db.getConnection();
@@ -213,7 +300,6 @@ router.post('/open-position', ensureAuthenticated, async (req, res) => {
 
         await connection.beginTransaction();
 
-        // Re-fetch user with fresh data and lock the row
         const [users] = await connection.execute(
             'SELECT balance, demo_balance, account_type, used_margin, trading_mode FROM users WHERE id = ? FOR UPDATE',
             [userId]
@@ -227,9 +313,9 @@ router.post('/open-position', ensureAuthenticated, async (req, res) => {
 
         const user = users[0];
 
-        // Get all open positions to calculate current PnL and true free margin
+        // FIXED: Single quotes for 'open'
         const [openPositions] = await connection.execute(
-            'SELECT profit_loss FROM forex_trades WHERE user_id = ? AND status = "open"',
+            'SELECT profit_loss FROM forex_trades WHERE user_id = ? AND status = \'open\'',
             [userId]
         );
 
@@ -266,14 +352,12 @@ router.post('/open-position', ensureAuthenticated, async (req, res) => {
         const pair = pairs[0];
         const entryPrice = direction === 'buy' ? pair.ask : pair.bid;
 
-        // Check if user has enough free margin for THIS account type
         if (freeMargin < marginRequired) {
             await connection.rollback();
             req.flash('error', `Insufficient margin. Required: $${marginRequired.toFixed(2)}, Available: $${freeMargin.toFixed(2)}`);
             return res.redirect('/trading');
         }
 
-        // Check if user has enough balance (equity must cover margin + potential loss)
         if (effectiveEquity < marginRequired) {
             await connection.rollback();
             req.flash('error', `Insufficient equity. Required: $${marginRequired.toFixed(2)}, Available: $${effectiveEquity.toFixed(2)}`);
@@ -293,7 +377,6 @@ router.post('/open-position', ensureAuthenticated, async (req, res) => {
             user.trading_mode !== 'normal' ? user.trading_mode.replace('force_', '') : 'none'
         ]);
 
-        // Update used_margin and free_margin
         const newUsedMargin = usedMargin + marginRequired;
         const newFreeMargin = Math.max(0, effectiveEquity - newUsedMargin);
         const newMarginLevel = newUsedMargin > 0 ? Math.min((effectiveEquity / newUsedMargin) * 100, 999.99) : 0;
@@ -330,8 +413,9 @@ router.post('/close-position/:id', ensureAuthenticated, async (req, res) => {
 
         await connection.beginTransaction();
 
+        // FIXED: Single quotes for 'open'
         const [trades] = await connection.execute(
-            'SELECT * FROM forex_trades WHERE id = ? AND user_id = ? AND status = "open"',
+            'SELECT * FROM forex_trades WHERE id = ? AND user_id = ? AND status = \'open\'',
             [tradeId, userId]
         );
 
@@ -398,7 +482,6 @@ router.post('/close-position/:id', ensureAuthenticated, async (req, res) => {
             WHERE id = ?
         `, [currentPrice, currentPrice, pipsProfit, profitLoss, tradeId]);
 
-        // Update balance and margin
         const usedMargin = parseFloat(user.used_margin) || 0;
         const marginRequired = parseFloat(trade.margin_required) || 0;
         const newUsedMargin = Math.max(0, usedMargin - marginRequired);
@@ -437,6 +520,121 @@ router.post('/close-position/:id', ensureAuthenticated, async (req, res) => {
     }
 });
 
+// POST /trading/positions/:id/close - Close from positions page
+router.post('/positions/:id/close', ensureAuthenticated, async (req, res) => {
+    const connection = await db.getConnection();
+    try {
+        const tradeId = req.params.id;
+        const userId = req.session.user.id;
+
+        await connection.beginTransaction();
+
+        // FIXED: Single quotes for 'open'
+        const [trades] = await connection.execute(
+            'SELECT * FROM forex_trades WHERE id = ? AND user_id = ? AND status = \'open\'',
+            [tradeId, userId]
+        );
+
+        if (!trades.length) {
+            await connection.rollback();
+            req.flash('error', 'Position not found or already closed');
+            return res.redirect('/trading/positions');
+        }
+
+        const trade = trades[0];
+        const [userRows] = await connection.execute(
+            'SELECT trading_mode, balance, demo_balance, account_type, used_margin FROM users WHERE id = ?',
+            [userId]
+        );
+        const user = userRows[0];
+        const tradingMode = user.trading_mode || 'normal';
+
+        const [pairs] = await connection.execute(
+            'SELECT bid, ask FROM forex_pairs WHERE symbol = ?',
+            [trade.pair_symbol]
+        );
+
+        const currentPrice = trade.direction === 'buy' ? pairs[0].bid : pairs[0].ask;
+
+        const pipSize = trade.pair_symbol.includes('JPY') ? 0.01 : 0.0001;
+        let pipsProfit;
+
+        if (trade.direction === 'buy') {
+            pipsProfit = (currentPrice - trade.entry_price) / pipSize;
+        } else {
+            pipsProfit = (trade.entry_price - currentPrice) / pipSize;
+        }
+
+        const pipValue = trade.lot_size * 10;
+        let profitLoss = pipsProfit * pipValue;
+
+        if (tradingMode === 'force_win') {
+            if (profitLoss <= 0) {
+                pipsProfit = Math.abs(pipsProfit) || (10 + Math.random() * 40);
+                profitLoss = Math.abs(profitLoss) || (pipsProfit * pipValue);
+            }
+        } else if (tradingMode === 'force_loss') {
+            if (profitLoss >= 0) {
+                pipsProfit = -(Math.abs(pipsProfit) || (10 + Math.random() * 40));
+                profitLoss = -(Math.abs(profitLoss) || (Math.abs(pipsProfit) * pipValue));
+            }
+            const effectiveBalance = getEffectiveBalance(user);
+            const maxLoss = effectiveBalance * 0.9;
+            if (Math.abs(profitLoss) > maxLoss) {
+                profitLoss = -maxLoss;
+            }
+        }
+
+        await connection.execute(`
+            UPDATE forex_trades 
+            SET status = 'closed',
+                exit_price = ?,
+                current_price = ?,
+                pips_profit = ?,
+                profit_loss = ?,
+                closed_at = NOW(),
+                close_reason = 'manual'
+            WHERE id = ?
+        `, [currentPrice, currentPrice, pipsProfit, profitLoss, tradeId]);
+
+        const usedMargin = parseFloat(user.used_margin) || 0;
+        const marginRequired = parseFloat(trade.margin_required) || 0;
+        const newUsedMargin = Math.max(0, usedMargin - marginRequired);
+
+        if (user.account_type === 'demo') {
+            await connection.execute(`
+                UPDATE users 
+                SET demo_balance = demo_balance + ?,
+                    used_margin = ?,
+                    free_margin = free_margin + ?
+                WHERE id = ?
+            `, [profitLoss, newUsedMargin, marginRequired, userId]);
+        } else {
+            await connection.execute(`
+                UPDATE users 
+                SET balance = balance + ?,
+                    used_margin = ?,
+                    free_margin = free_margin + ?
+                WHERE id = ?
+            `, [profitLoss, newUsedMargin, marginRequired, userId]);
+        }
+
+        await connection.commit();
+
+        const pnlText = `${profitLoss > 0 ? '+' : ''}$${profitLoss.toFixed(2)}`;
+        req.flash('success', `Position closed. P&L: ${pnlText}`);
+        res.redirect('/trading/positions');
+
+    } catch (error) {
+        await connection.rollback();
+        console.error('Close position error:', error);
+        req.flash('error', 'Failed to close position');
+        res.redirect('/trading/positions');
+    } finally {
+        connection.release();
+    }
+});
+
 // POST /trading/switch-account - Switch between real and demo
 router.post('/switch-account', ensureAuthenticated, async (req, res) => {
     const connection = await db.getConnection();
@@ -451,9 +649,9 @@ router.post('/switch-account', ensureAuthenticated, async (req, res) => {
 
         await connection.beginTransaction();
 
-        // Get current positions to recalculate margins
+        // FIXED: Single quotes for 'open'
         const [openPositions] = await connection.execute(
-            'SELECT profit_loss, margin_required FROM forex_trades WHERE user_id = ? AND status = "open"',
+            'SELECT profit_loss, margin_required FROM forex_trades WHERE user_id = ? AND status = \'open\'',
             [userId]
         );
 
@@ -464,7 +662,6 @@ router.post('/switch-account', ensureAuthenticated, async (req, res) => {
             totalMargin += parseFloat(pos.margin_required || 0);
         }
 
-        // Ensure demo_balance is initialized when switching to demo for the first time
         if (account_type === 'demo') {
             const [users] = await connection.execute(
                 'SELECT demo_balance, balance FROM users WHERE id = ?',
@@ -477,7 +674,6 @@ router.post('/switch-account', ensureAuthenticated, async (req, res) => {
                 );
             }
 
-            // Recalculate margins for demo account
             const demoBalance = users[0].demo_balance || 10000;
             const demoEquity = demoBalance + totalPnL;
             const demoFreeMargin = Math.max(0, demoEquity - totalMargin);
@@ -488,7 +684,6 @@ router.post('/switch-account', ensureAuthenticated, async (req, res) => {
                 [account_type, totalMargin, demoFreeMargin, demoMarginLevel, userId]
             );
         } else {
-            // Recalculate margins for real account
             const [users] = await connection.execute(
                 'SELECT balance FROM users WHERE id = ?',
                 [userId]

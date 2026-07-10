@@ -240,42 +240,78 @@ router.post('/withdraw/submit', ensureAuthenticated, async (req, res) => {
 
 // ==================== GET /transactions/history ====================
 
+// ==================== GET /transactions/history ====================
+
 router.get('/history', ensureAuthenticated, async (req, res) => {
     try {
+        const userId = req.session.user.id;
+        const view = req.query.view || 'transactions'; // 'transactions' or 'trading'
+
+        const [users] = await db.execute(
+            'SELECT currency, balance_currency FROM users WHERE id = ?',
+            [userId]
+        );
+        const displayCurrency = users[0]?.currency || 'USD';
+
+        // Fetch regular transactions (deposits/withdrawals)
         const [transactions] = await db.execute(`
             SELECT * FROM transactions
             WHERE user_id = ?
             ORDER BY created_at DESC
             LIMIT 50
-        `, [req.session.user.id]);
-
-        const [users] = await db.execute(
-            'SELECT currency, balance_currency FROM users WHERE id = ?',
-            [req.session.user.id]
-        );
-
-        const displayCurrency = users[0]?.currency || 'USD';
+        `, [userId]);
 
         // Convert transaction amounts to display currency
         for (const t of transactions) {
             t.displayAmount = await convertAmount(t.amount, 'USD', displayCurrency);
         }
 
+        // Fetch trading history (closed forex trades)
+        const [tradeHistory] = await db.execute(`
+            SELECT t.*, p.name as pair_name
+            FROM forex_trades t
+            JOIN forex_pairs p ON t.pair_id = p.id
+            WHERE t.user_id = ? AND t.status = 'closed'
+            ORDER BY t.closed_at DESC
+            LIMIT 50
+        `, [userId]);
+
+        // Parse trade history data
+        const parsedTradeHistory = tradeHistory.map(trade => ({
+            ...trade,
+            entry_price: parseFloat(trade.entry_price) || 0,
+            exit_price: parseFloat(trade.exit_price) || 0,
+            lot_size: parseFloat(trade.lot_size) || 0,
+            pips_profit: parseFloat(trade.pips_profit) || 0,
+            profit_loss: parseFloat(trade.profit_loss) || 0,
+            pnl_percent: parseFloat(trade.profit_loss) !== 0 && parseFloat(trade.entry_price) > 0
+                ? ((parseFloat(trade.profit_loss) / (parseFloat(trade.entry_price) * parseFloat(trade.lot_size) * 100000)) * 100).toFixed(2)
+                : '0.00',
+            duration: trade.closed_at && trade.opened_at 
+                ? Math.round((new Date(trade.closed_at) - new Date(trade.opened_at)) / 60000)
+                : 0
+        }));
+
         res.render('dashboard/history', {
-            title:           'Transaction History - Maximum',
-            user:            req.session.user,
+            title: 'History - Maximum',
+            user: req.session.user,
             transactions,
+            tradeHistory: parsedTradeHistory,
             displayCurrency,
-            formatCurrency
+            formatCurrency,
+            view, // Pass current view to template
+            messages: {
+                error: req.flash('error'),
+                success: req.flash('success')
+            }
         });
 
     } catch (error) {
-        console.error('Transaction history error:', error);
-        req.flash('error', 'Failed to load transaction history');
+        console.error('History error:', error);
+        req.flash('error', 'Failed to load history');
         res.redirect('/dashboard');
     }
 });
-
 
 // ==================== HELPER: Convert Amount ====================
 

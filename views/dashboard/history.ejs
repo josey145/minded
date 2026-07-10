@@ -2,49 +2,264 @@
 <%- include('../partials/navbar') %>
 
 <style>
+    .history-container { max-width: 1100px; margin: 0 auto; padding: 40px 20px; }
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
+    .page-header h2 { color: #ffffff; font-size: 28px; margin: 0; }
+    
+    /* Toggle Switch */
+    .view-toggle { display: flex; background-color: #111118; border: 1px solid #1e1e2e; border-radius: 12px; padding: 4px; }
+    .view-toggle button { 
+        background: none; border: none; color: #a1a1aa; padding: 10px 28px; border-radius: 8px; 
+        font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; 
+    }
+    .view-toggle button.active { background-color: #8b5cf6; color: #ffffff; }
+    .view-toggle button:hover:not(.active) { color: #ffffff; }
+    
     .history-card { background-color: #111118; border: 1px solid #1e1e2e; border-radius: 16px; margin-top: 24px; overflow-x: auto; }
     .history-table { width: 100%; border-collapse: collapse; color: #f4f4f5; }
-    .history-table th { background-color: rgba(139, 92, 246, 0.05); padding: 16px; text-align: left; font-size: 12px; color: #a1a1aa; text-transform: uppercase; }
+    .history-table th { background-color: rgba(139, 92, 246, 0.05); padding: 16px; text-align: left; font-size: 12px; color: #a1a1aa; text-transform: uppercase; letter-spacing: 0.5px; }
     .history-table td { padding: 16px; border-bottom: 1px solid #1e1e2e; font-size: 14px; }
-    .status-badge { padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; display: inline-block; }
+    .history-table tr:hover { background-color: rgba(139, 92, 246, 0.03); }
+    .history-table tr:last-child td { border-bottom: none; }
+    
+    .status-badge { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; display: inline-block; }
     .status-pending { background-color: rgba(250, 204, 21, 0.1); color: #facc15; }
     .status-completed { background-color: rgba(34, 197, 94, 0.1); color: #22c55e; }
+    .status-failed { background-color: rgba(239, 68, 68, 0.1); color: #ef4444; }
+    .status-cancelled { background-color: rgba(161, 161, 170, 0.1); color: #a1a1aa; }
+    
+    .amount-deposit { color: #22c55e; font-weight: 600; }
+    .amount-withdraw { color: #ef4444; font-weight: 600; }
+    
+    /* Trading History Styles */
+    .trade-side-long { color: #22c55e; font-weight: 600; text-transform: uppercase; font-size: 12px; }
+    .trade-side-short { color: #ef4444; font-weight: 600; text-transform: uppercase; font-size: 12px; }
+    .trade-pnl-positive { color: #22c55e; font-weight: 600; }
+    .trade-pnl-negative { color: #ef4444; font-weight: 600; }
+    
+    .asset-tag { display: inline-flex; align-items: center; gap: 10px; }
+    .asset-dot { width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px; color: #ffffff; }
+    
+    .empty-state { text-align: center; padding: 48px; color: #a1a1aa; }
+    .hidden { display: none; }
+    
+    .filter-bar { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+    .filter-bar select { 
+        background-color: #111118; border: 1px solid #1e1e2e; color: #f4f4f5; 
+        padding: 8px 16px; border-radius: 8px; font-size: 14px; cursor: pointer;
+    }
+    .filter-bar select:focus { outline: none; border-color: #8b5cf6; }
+    
+    .ref-code { font-family: 'SF Mono', monospace; font-size: 11px; color: #52525b; background: #1e1e2e; padding: 2px 8px; border-radius: 4px; }
+    
+    .duration-badge { font-size: 12px; color: #a1a1aa; }
+    
+    .back-link { color: #a1a1aa; text-decoration: none; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 16px; transition: color 0.2s; }
+    .back-link:hover { color: #ffffff; }
 </style>
 
-<div class="dashboard-container" style="max-width: 1000px; margin: 0 auto; padding: 40px 20px;">
-    <h2 style="color: #ffffff;">Transaction History</h2>
-    <div class="history-card">
-        <table class="history-table">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Type</th>
-                    <th>Method</th>
-                    <th>Amount</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                <% if (typeof transactions !== 'undefined' && transactions.length > 0) { %>
-                    <% transactions.forEach(tx => { %>
-                        <tr>
-                            <td><%= new Date(tx.created_at).toLocaleDateString() %></td>
-                            <td style="text-transform: capitalize;"><%= tx.type %></td>
-                            <td><%= tx.payment_method %></td>
-                            <td class="<%= tx.type === 'withdrawal' ? 'amount-withdraw' : 'amount-deposit' %>">
-                                <%= tx.type === 'withdrawal' ? '-' : '+' %><%= tx.amount %>
-                            </td>
-                            <td>
-                                <span class="status-badge status-<%= tx.status %>"><%= tx.status %></span>
-                            </td>
-                        </tr>
-                    <% }) %>
-                <% } else { %>
-                    <tr><td colspan="5" style="text-align: center; padding: 48px; color: #a1a1aa;">No records found.</td></tr>
-                <% } %>
-            </tbody>
-        </table>
+<div class="history-container">
+    <a href="/dashboard" class="back-link">← Back to Dashboard</a>
+    
+    <div class="page-header">
+        <h2>History</h2>
+        <div class="view-toggle">
+            <button id="btnTransactions" class="<%= view === 'transactions' ? 'active' : '' %>" onclick="switchView('transactions')">Transactions</button>
+            <button id="btnTrading" class="<%= view === 'trading' ? 'active' : '' %>" onclick="switchView('trading')">Trading History</button>
+        </div>
+    </div>
+
+    <!-- Transaction History View -->
+    <div id="transactionsView" class="<%= view === 'transactions' ? '' : 'hidden' %>">
+        <div class="filter-bar">
+            <select id="txTypeFilter" onchange="filterTransactions()">
+                <option value="all">All Types</option>
+                <option value="deposit">Deposits</option>
+                <option value="withdrawal">Withdrawals</option>
+            </select>
+            <select id="txStatusFilter" onchange="filterTransactions()">
+                <option value="all">All Status</option>
+                <option value="completed">Completed</option>
+                <option value="pending">Pending</option>
+                <option value="failed">Failed</option>
+            </select>
+        </div>
+        
+        <div class="history-card">
+            <table class="history-table" id="transactionsTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Method</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Reference</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (transactions && transactions.length > 0) { %>
+                        <% transactions.forEach(tx => { %>
+                            <tr data-type="<%= tx.type %>" data-status="<%= tx.status %>">
+                                <td>
+                                    <div style="font-weight: 500;"><%= new Date(tx.created_at).toLocaleDateString() %></div>
+                                    <div style="font-size: 12px; color: #52525b;"><%= new Date(tx.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %></div>
+                                </td>
+                                <td style="text-transform: capitalize; font-weight: 500;">
+                                    <div class="asset-tag">
+                                        <span style="width: 8px; height: 8px; border-radius: 50%; background-color: <%= tx.type === 'deposit' ? '#22c55e' : '#ef4444' %>; display: inline-block;"></span>
+                                        <%= tx.type %>
+                                    </div>
+                                </td>
+                                <td><%= tx.payment_method || '—' %></td>
+                                <td class="<%= tx.type === 'withdrawal' ? 'amount-withdraw' : 'amount-deposit' %>">
+                                    <%= tx.type === 'withdrawal' ? '-' : '+' %><%= formatCurrency(tx.displayAmount || tx.amount, displayCurrency) %>
+                                </td>
+                                <td>
+                                    <span class="status-badge status-<%= tx.status %>"><%= tx.status %></span>
+                                </td>
+                                <td><span class="ref-code"><%= tx.external_id ? tx.external_id.substring(0, 16) : tx.id.toString().slice(-8).toUpperCase() %></span></td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr><td colspan="6" class="empty-state">No transaction records found.</td></tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Trading History View -->
+    <div id="tradingView" class="<%= view === 'trading' ? '' : 'hidden' %>">
+        <div class="filter-bar">
+            <select id="tradeSideFilter" onchange="filterTrades()">
+                <option value="all">All Sides</option>
+                <option value="buy">Buy (Long)</option>
+                <option value="sell">Sell (Short)</option>
+            </select>
+            <select id="tradeOutcomeFilter" onchange="filterTrades()">
+                <option value="all">All Outcomes</option>
+                <option value="win">Profitable</option>
+                <option value="loss">Loss</option>
+            </select>
+        </div>
+        
+        <div class="history-card">
+            <table class="history-table" id="tradingTable">
+                <thead>
+                    <tr>
+                        <th>Closed Date</th>
+                        <th>Pair</th>
+                        <th>Side</th>
+                        <th>Entry → Exit</th>
+                        <th>Size</th>
+                        <th>P&L</th>
+                        <th>Duration</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (tradeHistory && tradeHistory.length > 0) { %>
+                        <% tradeHistory.forEach(trade => { 
+                            const hours = Math.floor(trade.duration / 60);
+                            const mins = trade.duration % 60;
+                        %>
+                            <tr data-side="<%= trade.direction %>" data-outcome="<%= parseFloat(trade.profit_loss) >= 0 ? 'win' : 'loss' %>">
+                                <td>
+                                    <div style="font-weight: 500;"><%= new Date(trade.closed_at).toLocaleDateString() %></div>
+                                    <div style="font-size: 12px; color: #52525b;"><%= new Date(trade.closed_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %></div>
+                                </td>
+                                <td>
+                                    <div class="asset-tag">
+                                        <div class="asset-dot"><%= trade.pair_symbol.substring(0, 2) %></div>
+                                        <div>
+                                            <div style="font-weight: 600;"><%= trade.pair_symbol %></div>
+                                            <div style="font-size: 12px; color: #52525b;"><%= trade.pair_name %></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="trade-side-<%= trade.direction === 'buy' ? 'long' : 'short' %>"><%= trade.direction.toUpperCase() %></td>
+                                <td>
+                                    <div style="font-weight: 500;"><%= parseFloat(trade.entry_price).toFixed(5) %></div>
+                                    <div style="font-size: 12px; color: #52525b;">→ <%= parseFloat(trade.exit_price).toFixed(5) %></div>
+                                </td>
+                                <td><%= trade.lot_size %> lots</td>
+                                <td class="<%= parseFloat(trade.profit_loss) >= 0 ? 'trade-pnl-positive' : 'trade-pnl-negative' %>">
+                                    <%= parseFloat(trade.profit_loss) >= 0 ? '+' : '' %>$<%= Math.abs(parseFloat(trade.profit_loss)).toFixed(2) %>
+                                    <div style="font-size: 12px; color: #52525b;">(<%= trade.pnl_percent >= 0 ? '+' : '' %><%= trade.pnl_percent %>%)</div>
+                                </td>
+                                <td class="duration-badge">
+                                    <%= hours > 0 ? hours + 'h ' : '' %><%= mins %>m
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr><td colspan="7" class="empty-state">
+                            <div style="padding: 32px;">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity: 0.3; margin-bottom: 12px;">
+                                    <path d="M3 3v18h18"/>
+                                    <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
+                                </svg>
+                                <div style="font-size: 16px; color: #ffffff; margin-bottom: 8px;">No trading history yet</div>
+                                <div>Your closed trades will appear here.</div>
+                                <a href="/trading" style="display: inline-block; margin-top: 16px; color: #8b5cf6; text-decoration: none; font-weight: 600;">Start Trading →</a>
+                            </div>
+                        </td></tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
+
+<script>
+    function switchView(view) {
+        const txView = document.getElementById('transactionsView');
+        const tradeView = document.getElementById('tradingView');
+        const btnTx = document.getElementById('btnTransactions');
+        const btnTrade = document.getElementById('btnTrading');
+        
+        if (view === 'transactions') {
+            txView.classList.remove('hidden');
+            tradeView.classList.add('hidden');
+            btnTx.classList.add('active');
+            btnTrade.classList.remove('active');
+            history.replaceState(null, '', '/transactions/history?view=transactions');
+        } else {
+            txView.classList.add('hidden');
+            tradeView.classList.remove('hidden');
+            btnTx.classList.remove('active');
+            btnTrade.classList.add('active');
+            history.replaceState(null, '', '/transactions/history?view=trading');
+        }
+    }
+    
+    function filterTransactions() {
+        const type = document.getElementById('txTypeFilter').value;
+        const status = document.getElementById('txStatusFilter').value;
+        const rows = document.querySelectorAll('#transactionsTable tbody tr');
+        
+        rows.forEach(row => {
+            if (row.classList.contains('empty-state')) return;
+            const rowType = row.getAttribute('data-type');
+            const rowStatus = row.getAttribute('data-status');
+            const show = (type === 'all' || rowType === type) && (status === 'all' || rowStatus === status);
+            row.style.display = show ? '' : 'none';
+        });
+    }
+    
+    function filterTrades() {
+        const side = document.getElementById('tradeSideFilter').value;
+        const outcome = document.getElementById('tradeOutcomeFilter').value;
+        const rows = document.querySelectorAll('#tradingTable tbody tr');
+        
+        rows.forEach(row => {
+            if (row.classList.contains('empty-state')) return;
+            const rowSide = row.getAttribute('data-side');
+            const rowOutcome = row.getAttribute('data-outcome');
+            const show = (side === 'all' || rowSide === side) && (outcome === 'all' || rowOutcome === outcome);
+            row.style.display = show ? '' : 'none';
+        });
+    }
+</script>
 
 <%- include('../partials/footer') %>
