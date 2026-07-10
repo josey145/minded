@@ -3,14 +3,13 @@
 
 <style>
 /* ═══════════════════════════════════════════════════════════════════════════════
-   TRUST-FX DASHBOARD v3.1 — DARK THEME (Matching Reference)
-   Dark sidebar + dark content, colored accent cards, clean fintech aesthetic
+   TRUST-FX DASHBOARD v3.2 — DARK THEME (FIXED)
+   Username visible, balance prominent, mobile-first
    ═══════════════════════════════════════════════════════════════════════════════ */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
-  /* Dark Theme Palette */
   --bg-body: #0b0f19;
   --bg-sidebar: #111827;
   --bg-card: #1a1f2e;
@@ -27,7 +26,6 @@
   --text-muted: #64748b;
   --text-dim: #475569;
 
-  /* Accent Colors */
   --green: #22c55e;
   --green-glow: rgba(34, 197, 94, 0.15);
   --green-soft: rgba(34, 197, 94, 0.1);
@@ -48,7 +46,6 @@
   --pink: #ec4899;
   --pink-soft: rgba(236, 72, 153, 0.1);
 
-  /* Design Tokens */
   --radius-sm: 10px;
   --radius-md: 14px;
   --radius-lg: 18px;
@@ -66,13 +63,7 @@
 
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html { font-size: 14px; -webkit-font-smoothing: antialiased; }
-body { 
-  font-family: var(--font-sans); 
-  background: var(--bg-body); 
-  color: var(--text-primary); 
-  min-height: 100vh; 
-  line-height: 1.5; 
-}
+body { font-family: var(--font-sans); background: var(--bg-body); color: var(--text-primary); min-height: 100vh; line-height: 1.5; }
 
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -81,7 +72,7 @@ body {
 
 /* ─── ANIMATIONS ─── */
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(16px); }
+  from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
 @keyframes fadeIn {
@@ -100,74 +91,262 @@ body {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-4px); }
 }
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
 
-.animate-fadeInUp { animation: fadeInUp 0.5s var(--transition-slow) forwards; opacity: 0; }
-.animate-fadeIn { animation: fadeIn 0.4s var(--transition-slow) forwards; opacity: 0; }
-.animate-slideIn { animation: slideInRight 0.4s var(--transition-slow) forwards; opacity: 0; }
+.animate-fadeInUp { animation: fadeInUp 0.6s var(--transition-slow) forwards; opacity: 0; }
+.animate-fadeIn { animation: fadeIn 0.5s var(--transition-slow) forwards; opacity: 0; }
+.animate-slideIn { animation: slideInRight 0.5s var(--transition-slow) forwards; opacity: 0; }
 
 /* ─── LAYOUT ─── */
 .dashboard-wrapper { min-height: 100vh; }
 .dashboard-container { max-width: 1440px; margin: 0 auto; padding: 24px 32px; }
 
-/* ─── PAGE HEADER ─── */
-.page-header {
+/* ═══════════════════════════════════════════════════════════════════════════════
+   USER PROFILE HEADER — PROMINENT NAME DISPLAY
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+.user-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 28px;
+  margin-bottom: 24px;
   flex-wrap: wrap;
   gap: 16px;
 }
-.page-header-left { display: flex; flex-direction: column; gap: 4px; }
-.page-greeting { font-size: 13px; color: var(--text-muted); font-weight: 500; }
-.page-title { font-size: 24px; font-weight: 700; color: var(--text-primary); }
-.page-header-right { display: flex; align-items: center; gap: 12px; }
 
-.header-btn {
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.user-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--purple), #7c3aed);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+  box-shadow: 0 4px 16px var(--purple-glow);
+  border: 2px solid rgba(168, 85, 247, 0.3);
+}
+
+.user-info { display: flex; flex-direction: column; gap: 4px; }
+.user-greeting { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+.user-name { 
+  font-size: 26px; 
+  font-weight: 800; 
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+}
+.user-status {
   display: inline-flex;
   align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 20px;
+  width: fit-content;
+}
+.user-status.verified {
+  background: var(--green-soft);
+  color: var(--green);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+}
+.user-status.pending {
+  background: var(--orange-soft);
+  color: var(--orange);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.user-actions { display: flex; align-items: center; gap: 10px; }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 10px 18px;
+  padding: 12px 22px;
   border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: var(--transition);
+  touch-action: manipulation;
+  min-height: 44px;
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--green), #16a34a);
+  color: white;
+  box-shadow: 0 4px 14px var(--green-glow);
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px var(--green-glow); }
+.btn-ghost {
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover { background: var(--bg-hover); border-color: var(--border-focus); color: var(--text-primary); }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   BALANCE HERO — MOBILE-FIRST PROMINENT DISPLAY
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+.balance-hero {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.08) 0%, rgba(59, 130, 246, 0.05) 50%, rgba(6, 182, 212, 0.03) 100%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 32px;
+  margin-bottom: 28px;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+.balance-hero::before {
+  content: '';
+  position: absolute;
+  top: -50%; right: -10%;
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, var(--purple-glow) 0%, transparent 70%);
+  opacity: 0.4;
+}
+.balance-hero::after {
+  content: '';
+  position: absolute;
+  bottom: -30%; left: -5%;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, var(--green-glow) 0%, transparent 70%);
+  opacity: 0.2;
+}
+
+.balance-hero-inner { position: relative; z-index: 1; }
+.balance-hero-label {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.balance-hero-label i { color: var(--green); font-size: 12px; }
+.balance-hero-amount {
+  font-size: 48px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+  letter-spacing: -1.5px;
+  line-height: 1.1;
+  margin-bottom: 8px;
+  text-shadow: 0 0 40px rgba(168, 85, 247, 0.2);
+}
+.balance-hero-currency {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+}
+.balance-hero-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.balance-hero-actions .btn { min-height: 48px; padding: 14px 28px; }
+
+/* ─── ALERTS ─── */
+.alert-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px 22px;
+  border-radius: var(--radius-lg);
+  margin-bottom: 16px;
+  border: 1px solid;
+  position: relative;
+  animation: slideInRight 0.4s var(--transition-slow) forwards;
+  opacity: 0;
+}
+.alert-banner.warning { background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(245,158,11,0.02)); border-color: rgba(245,158,11,0.2); }
+.alert-banner.error { background: linear-gradient(135deg, rgba(239,68,68,0.08), rgba(239,68,68,0.02)); border-color: rgba(239,68,68,0.2); }
+.alert-banner.success { background: linear-gradient(135deg, rgba(34,197,94,0.08), rgba(34,197,94,0.02)); border-color: rgba(34,197,94,0.2); }
+.alert-banner.info { background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(59,130,246,0.02)); border-color: rgba(59,130,246,0.2); }
+
+.alert-banner-icon {
+  width: 40px; height: 40px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.alert-banner.warning .alert-banner-icon { background: rgba(245,158,11,0.1); color: var(--orange); }
+.alert-banner.error .alert-banner-icon { background: rgba(239,68,68,0.1); color: var(--red); }
+.alert-banner.success .alert-banner-icon { background: rgba(34,197,94,0.1); color: var(--green); }
+.alert-banner.info .alert-banner-icon { background: rgba(59,130,246,0.1); color: var(--blue); }
+
+.alert-banner-body { flex: 1; }
+.alert-banner-title { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+.alert-banner.warning .alert-banner-title { color: var(--orange); }
+.alert-banner.error .alert-banner-title { color: var(--red); }
+.alert-banner.success .alert-banner-title { color: var(--green); }
+.alert-banner.info .alert-banner-title { color: var(--blue); }
+.alert-banner-text { font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 12px; }
+.alert-banner-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.alert-banner-btn {
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
   font-size: 13px;
   font-weight: 600;
   text-decoration: none;
-  border: 1px solid var(--border);
-  background: var(--bg-card);
-  color: var(--text-secondary);
+  border: none;
   cursor: pointer;
   transition: var(--transition);
 }
-.header-btn:hover { 
-  background: var(--bg-hover); 
-  border-color: var(--border-focus); 
-  color: var(--text-primary); 
+.alert-banner-btn.primary { background: linear-gradient(135deg, var(--purple), #7c3aed); color: white; }
+.alert-banner-btn.primary:hover { box-shadow: 0 4px 12px var(--purple-glow); }
+.alert-banner-btn.ghost { background: rgba(255,255,255,0.05); color: var(--text-muted); border: 1px solid var(--border); }
+.alert-banner-btn.ghost:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+.alert-banner-close {
+  position: absolute;
+  top: 14px; right: 14px;
+  width: 30px; height: 30px;
+  border: none;
+  background: rgba(255,255,255,0.05);
+  color: var(--text-muted);
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
 }
-.header-btn i { font-size: 14px; }
-.header-btn.primary { 
-  background: linear-gradient(135deg, var(--green), #16a34a); 
-  color: white; 
-  border-color: transparent;
-  box-shadow: 0 4px 14px var(--green-glow);
-}
-.header-btn.primary:hover { 
-  background: linear-gradient(135deg, #16a34a, #15803d); 
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px var(--green-glow);
-}
+.alert-banner-close:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
 
-/* ─── STATS ROW (Colored Cards like Reference) ─── */
+/* ─── STATS ROW ─── */
 .stats-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  gap: 18px;
   margin-bottom: 28px;
 }
 .stat-box {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 24px;
+  padding: 22px;
   position: relative;
   overflow: hidden;
   transition: var(--transition-slow);
@@ -176,37 +355,29 @@ body {
   transform: translateY(-3px);
   box-shadow: var(--shadow-md);
 }
-.stat-box::after {
+.stat-box::before {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 3px;
-  opacity: 0;
-  transition: var(--transition);
 }
-.stat-box:hover::after { opacity: 1; }
-
-.stat-box.purple { border-top: 3px solid var(--purple); }
-.stat-box.purple::after { background: linear-gradient(90deg, var(--purple), transparent); height: 60px; opacity: 0.05; top: 0; }
-.stat-box.green { border-top: 3px solid var(--green); }
-.stat-box.green::after { background: linear-gradient(90deg, var(--green), transparent); height: 60px; opacity: 0.05; top: 0; }
-.stat-box.blue { border-top: 3px solid var(--blue); }
-.stat-box.blue::after { background: linear-gradient(90deg, var(--blue), transparent); height: 60px; opacity: 0.05; top: 0; }
-.stat-box.orange { border-top: 3px solid var(--orange); }
-.stat-box.orange::after { background: linear-gradient(90deg, var(--orange), transparent); height: 60px; opacity: 0.05; top: 0; }
+.stat-box.purple::before { background: linear-gradient(90deg, var(--purple), transparent); }
+.stat-box.green::before { background: linear-gradient(90deg, var(--green), transparent); }
+.stat-box.blue::before { background: linear-gradient(90deg, var(--blue), transparent); }
+.stat-box.orange::before { background: linear-gradient(90deg, var(--orange), transparent); }
 
 .stat-box-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 .stat-box-label { 
-  font-size: 12px; 
+  font-size: 11px; 
   color: var(--text-muted); 
-  font-weight: 500; 
+  font-weight: 600; 
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.8px;
 }
 .stat-box-icon {
   width: 40px; height: 40px;
@@ -222,7 +393,7 @@ body {
 .stat-box-icon.orange { background: var(--orange-soft); color: var(--orange); }
 
 .stat-box-value { 
-  font-size: 26px; 
+  font-size: 24px; 
   font-weight: 800; 
   font-family: var(--font-mono); 
   color: var(--text-primary); 
@@ -258,7 +429,7 @@ body {
   margin-bottom: 24px;
 }
 
-/* ─── CARD COMPONENT ─── */
+/* ─── CARD ─── */
 .card {
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -266,10 +437,7 @@ body {
   overflow: hidden;
   transition: var(--transition);
 }
-.card:hover { 
-  border-color: var(--border-focus); 
-  box-shadow: var(--shadow-md); 
-}
+.card:hover { border-color: var(--border-focus); box-shadow: var(--shadow-md); }
 .card-header {
   display: flex;
   align-items: center;
@@ -288,7 +456,6 @@ body {
   gap: 10px;
 }
 .card-title i { color: var(--purple); font-size: 16px; }
-.card-actions { display: flex; align-items: center; gap: 8px; }
 .card-body { padding: 20px 24px; }
 
 /* ─── CHART AREA ─── */
@@ -302,12 +469,7 @@ body {
   gap: 12px;
 }
 .chart-value-group { display: flex; flex-direction: column; gap: 4px; }
-.chart-main-value { 
-  font-size: 32px; 
-  font-weight: 800; 
-  font-family: var(--font-mono); 
-  color: var(--text-primary); 
-}
+.chart-main-value { font-size: 32px; font-weight: 800; font-family: var(--font-mono); color: var(--text-primary); }
 .chart-sub-value { 
   font-size: 13px; 
   color: var(--text-muted); 
@@ -377,7 +539,7 @@ body {
   background-size: cover;
 }
 
-/* ─── POSITIONS LIST ─── */
+/* ─── POSITIONS ─── */
 .positions-list { display: flex; flex-direction: column; gap: 8px; }
 .position-item {
   display: flex;
@@ -391,11 +553,7 @@ body {
   flex-wrap: wrap;
   gap: 12px;
 }
-.position-item:hover { 
-  background: var(--bg-hover); 
-  border-color: var(--border); 
-}
-
+.position-item:hover { background: var(--bg-hover); border-color: var(--border); }
 .position-info { display: flex; align-items: center; gap: 14px; }
 .position-pair { display: flex; flex-direction: column; gap: 2px; }
 .position-symbol { font-weight: 700; font-size: 14px; color: var(--text-primary); }
@@ -410,7 +568,6 @@ body {
 }
 .position-tag.buy { background: var(--green-soft); color: var(--green); }
 .position-tag.sell { background: var(--red-soft); color: var(--red); }
-
 .position-metrics { display: flex; gap: 28px; flex-wrap: wrap; }
 .position-metric { text-align: center; }
 .position-metric-label { 
@@ -434,7 +591,7 @@ body {
 .position-pnl.positive { color: var(--green); }
 .position-pnl.negative { color: var(--red); }
 
-/* ─── ACTIVITY LIST ─── */
+/* ─── ACTIVITY ─── */
 .activity-list { display: flex; flex-direction: column; }
 .activity-item {
   display: flex;
@@ -448,7 +605,6 @@ body {
 }
 .activity-item:last-child { border-bottom: none; }
 .activity-item:hover { padding-left: 8px; }
-
 .activity-info { display: flex; flex-direction: column; gap: 3px; }
 .activity-title { 
   font-weight: 600; 
@@ -478,7 +634,7 @@ body {
 .pl-badge.positive { background: var(--green-soft); color: var(--green); }
 .pl-badge.negative { background: var(--red-soft); color: var(--red); }
 
-/* ─── SIDEBAR WIDGETS ─── */
+/* ─── WIDGETS ─── */
 .widget-list { display: flex; flex-direction: column; gap: 10px; }
 .widget-item {
   display: flex;
@@ -493,10 +649,7 @@ body {
   color: inherit;
   cursor: pointer;
 }
-.widget-item:hover { 
-  background: var(--bg-hover); 
-  border-color: var(--border); 
-}
+.widget-item:hover { background: var(--bg-hover); border-color: var(--border); }
 .widget-icon {
   width: 42px; height: 42px;
   border-radius: var(--radius-sm);
@@ -530,96 +683,6 @@ body {
   text-align: center;
 }
 
-/* ─── ALERTS ─── */
-.alert-banner {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  padding: 18px 22px;
-  border-radius: var(--radius-lg);
-  margin-bottom: 16px;
-  border: 1px solid;
-  position: relative;
-  animation: slideInRight 0.4s var(--transition-slow) forwards;
-  opacity: 0;
-}
-.alert-banner.warning { 
-  background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(245,158,11,0.02)); 
-  border-color: rgba(245,158,11,0.2); 
-}
-.alert-banner.error { 
-  background: linear-gradient(135deg, rgba(239,68,68,0.08), rgba(239,68,68,0.02)); 
-  border-color: rgba(239,68,68,0.2); 
-}
-.alert-banner.success { 
-  background: linear-gradient(135deg, rgba(34,197,94,0.08), rgba(34,197,94,0.02)); 
-  border-color: rgba(34,197,94,0.2); 
-}
-.alert-banner.info { 
-  background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(59,130,246,0.02)); 
-  border-color: rgba(59,130,246,0.2); 
-}
-
-.alert-banner-icon {
-  width: 40px; height: 40px;
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  flex-shrink: 0;
-}
-.alert-banner.warning .alert-banner-icon { background: rgba(245,158,11,0.1); color: var(--orange); }
-.alert-banner.error .alert-banner-icon { background: rgba(239,68,68,0.1); color: var(--red); }
-.alert-banner.success .alert-banner-icon { background: rgba(34,197,94,0.1); color: var(--green); }
-.alert-banner.info .alert-banner-icon { background: rgba(59,130,246,0.1); color: var(--blue); }
-
-.alert-banner-body { flex: 1; }
-.alert-banner-title { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
-.alert-banner.warning .alert-banner-title { color: var(--orange); }
-.alert-banner.error .alert-banner-title { color: var(--red); }
-.alert-banner.success .alert-banner-title { color: var(--green); }
-.alert-banner.info .alert-banner-title { color: var(--blue); }
-.alert-banner-text { font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 12px; }
-.alert-banner-actions { display: flex; gap: 10px; }
-.alert-banner-btn {
-  padding: 8px 16px;
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  font-weight: 600;
-  text-decoration: none;
-  border: none;
-  cursor: pointer;
-  transition: var(--transition);
-}
-.alert-banner-btn.primary { 
-  background: linear-gradient(135deg, var(--purple), #7c3aed); 
-  color: white; 
-}
-.alert-banner-btn.primary:hover { box-shadow: 0 4px 12px var(--purple-glow); }
-.alert-banner-btn.ghost { 
-  background: rgba(255,255,255,0.05); 
-  color: var(--text-muted); 
-  border: 1px solid var(--border); 
-}
-.alert-banner-btn.ghost:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
-
-.alert-banner-close {
-  position: absolute;
-  top: 14px; right: 14px;
-  width: 30px; height: 30px;
-  border: none;
-  background: rgba(255,255,255,0.05);
-  color: var(--text-muted);
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: var(--transition);
-}
-.alert-banner-close:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
-
 /* ─── EMPTY STATE ─── */
 .empty-state { text-align: center; padding: 48px 20px; }
 .empty-state i { font-size: 44px; color: var(--text-dim); margin-bottom: 16px; display: block; opacity: 0.4; }
@@ -627,7 +690,7 @@ body {
 .empty-state a { color: var(--purple); text-decoration: none; font-weight: 600; font-size: 14px; }
 .empty-state a:hover { text-decoration: underline; }
 
-/* ─── BTC TICKER WIDGET ─── */
+/* ─── BTC TICKER ─── */
 .ticker-widget {
   background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%);
   border-radius: var(--radius-lg);
@@ -649,7 +712,7 @@ body {
   content: '';
   position: absolute;
   bottom: -30%; left: -10%;
-  width: 200px; height: 200px;
+  width: 160px; height: 160px;
   background: radial-gradient(circle, var(--green-glow) 0%, transparent 70%);
   opacity: 0.3;
 }
@@ -680,7 +743,6 @@ body {
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
   color: #86efac;
   margin-left: auto;
 }
@@ -691,12 +753,12 @@ body {
   animation: pulse-dot 2s infinite; 
 }
 .ticker-widget-price { 
-  font-size: 32px; 
+  font-size: 30px; 
   font-weight: 800; 
   font-family: var(--font-mono); 
   position: relative; 
   z-index: 1;
-  text-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+  text-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
 }
 .ticker-widget-change { 
   font-size: 14px; 
@@ -708,7 +770,7 @@ body {
 .ticker-widget-change.up { color: #86efac; }
 .ticker-widget-change.down { color: #fca5a5; }
 
-/* ─── SCROLL REVEAL ─── */
+/* ─── REVEAL ─── */
 .reveal {
   opacity: 0;
   transform: translateY(24px);
@@ -717,7 +779,7 @@ body {
 .reveal.visible { opacity: 1; transform: translateY(0); }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
-   RESPONSIVE DESIGN
+   RESPONSIVE — MOBILE FIRST
    ═══════════════════════════════════════════════════════════════════════════════ */
 
 @media (max-width: 1200px) {
@@ -729,13 +791,27 @@ body {
   .main-grid { grid-template-columns: 1fr; }
 }
 
+/* MOBILE BREAKPOINT */
 @media (max-width: 768px) {
   .dashboard-container { padding: 16px; }
-  .page-header { flex-direction: column; align-items: flex-start; }
-  .page-title { font-size: 20px; }
-  .stats-row { grid-template-columns: 1fr; gap: 12px; }
-  .stat-box { padding: 20px; }
+
+  /* User Header Mobile */
+  .user-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .user-avatar { width: 48px; height: 48px; font-size: 18px; }
+  .user-name { font-size: 22px; }
+  .user-actions { width: 100%; }
+  .user-actions .btn { flex: 1; justify-content: center; }
+
+  /* Balance Hero Mobile — PROMINENT */
+  .balance-hero { padding: 24px 20px; margin-bottom: 20px; }
+  .balance-hero-amount { font-size: 36px; }
+  .balance-hero-actions { flex-direction: column; }
+  .balance-hero-actions .btn { width: 100%; justify-content: center; }
+
+  .stats-row { grid-template-columns: 1fr; gap: 12px; margin-bottom: 20px; }
+  .stat-box { padding: 18px; }
   .stat-box-value { font-size: 22px; }
+
   .main-grid { gap: 16px; }
   .card-header { padding: 16px 20px; }
   .card-body { padding: 16px 20px; }
@@ -743,22 +819,33 @@ body {
   .chart-visual { height: 180px; }
   .position-item { padding: 14px; }
   .position-metrics { width: 100%; justify-content: space-between; }
-  .header-btn span { display: none; }
+
   .ticker-widget { padding: 20px; }
   .ticker-widget-price { font-size: 26px; }
+
+  .alert-banner { padding: 16px 18px; flex-direction: column; gap: 12px; }
+  .alert-banner-actions { width: 100%; }
+  .alert-banner-btn { flex: 1; justify-content: center; }
 }
 
+/* SMALL MOBILE */
 @media (max-width: 480px) {
-  .page-title { font-size: 18px; }
+  .user-name { font-size: 20px; }
+  .balance-hero-amount { font-size: 32px; }
   .stat-box { padding: 16px; }
   .stat-box-value { font-size: 20px; }
   .chart-main-value { font-size: 22px; }
   .position-item { flex-direction: column; align-items: flex-start; }
   .position-pnl { align-self: flex-end; }
   .widget-item { padding: 12px; }
-  .alert-banner { padding: 16px 18px; }
 }
 
+/* LANDSCAPE */
+@media (max-height: 500px) and (orientation: landscape) {
+  .dashboard-wrapper { padding-bottom: 16px; }
+}
+
+/* REDUCED MOTION */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
@@ -767,21 +854,60 @@ body {
 <div class="dashboard-wrapper">
   <div class="dashboard-container">
 
-    <!-- ═══ PAGE HEADER ═══ -->
-    <header class="page-header animate-fadeInUp">
-      <div class="page-header-left">
-        <span class="page-greeting">Dashboard Overview</span>
-        <h1 class="page-title">Welcome back, <%= user.username %></h1>
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         USER PROFILE HEADER — Name prominently displayed with avatar
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <header class="user-header animate-fadeInUp">
+      <div class="user-profile">
+        <div class="user-avatar">
+          <%= user.username ? user.username.charAt(0).toUpperCase() : 'U' %>
+        </div>
+        <div class="user-info">
+          <span class="user-greeting">Good to see you,</span>
+          <h1 class="user-name"><%= user.username || 'User' %></h1>
+          <% if (user.account_verified) { %>
+            <span class="user-status verified">
+              <i class="fas fa-shield-check"></i> Verified Account
+            </span>
+          <% } else { %>
+            <span class="user-status pending">
+              <i class="fas fa-clock"></i> Pending Verification
+            </span>
+          <% } %>
+        </div>
       </div>
-      <div class="page-header-right">
-        <a href="/investments" class="header-btn primary">
-          <i class="fas fa-plus"></i> <span>Invest</span>
+      <div class="user-actions">
+        <a href="/investments" class="btn btn-primary">
+          <i class="fas fa-plus"></i> Invest
         </a>
-        <a href="/transactions/withdraw/verify" class="header-btn">
-          <i class="fas fa-arrow-up"></i> <span>Withdraw</span>
+        <a href="/transactions/withdraw/verify" class="btn btn-ghost">
+          <i class="fas fa-arrow-up"></i> Withdraw
         </a>
       </div>
     </header>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         BALANCE HERO — Big, prominent balance display (first thing on mobile)
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <section class="balance-hero animate-fadeInUp" style="animation-delay: 0.1s;">
+      <div class="balance-hero-inner">
+        <div class="balance-hero-label">
+          <i class="fas fa-wallet"></i> Available Balance
+        </div>
+        <div class="balance-hero-amount"><%= balanceFormatted || '$0.00' %></div>
+        <div class="balance-hero-currency">
+          Currency: <%= user.currency || 'USD' %>
+        </div>
+        <div class="balance-hero-actions">
+          <a href="/investments" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Invest Now
+          </a>
+          <a href="/transactions/withdraw/verify" class="btn btn-ghost">
+            <i class="fas fa-arrow-up"></i> Withdraw
+          </a>
+        </div>
+      </div>
+    </section>
 
     <!-- ═══ ALERTS ═══ -->
     <% if (typeof warnings !== 'undefined' && warnings && warnings.length > 0) { %>
@@ -794,7 +920,7 @@ body {
           default: alertType = 'info'; iconSymbol = 'fa-envelope';
         }
       %>
-      <div class="alert-banner <%= alertType %>" id="alert-<%= warning.id %>" style="animation-delay: <%= index * 0.1 %>s;">
+      <div class="alert-banner <%= alertType %>" id="alert-<%= warning.id %>" style="animation-delay: <%= 0.2 + (index * 0.1) %>s;">
         <div class="alert-banner-icon"><i class="fas <%= iconSymbol %>"></i></div>
         <div class="alert-banner-body">
           <div class="alert-banner-title"><%= warning.title %></div>
@@ -811,7 +937,7 @@ body {
       <% }) %>
     <% } %>
 
-    <!-- ═══ STATS ROW (Colored Top Cards) ═══ -->
+    <!-- ═══ STATS ROW ═══ -->
     <section class="stats-row reveal">
       <!-- Portfolio Value -->
       <div class="stat-box purple">
@@ -819,16 +945,16 @@ body {
           <span class="stat-box-label">Portfolio Value</span>
           <div class="stat-box-icon purple"><i class="fas fa-chart-pie"></i></div>
         </div>
-        <div class="stat-box-value"><%= totalValueFormatted %></div>
-        <% if (tradeStats.winRate > 0) { %>
+        <div class="stat-box-value"><%= totalValueFormatted || '$0.00' %></div>
+        <% if (typeof tradeStats !== 'undefined' && tradeStats.winRate > 0) { %>
           <div class="stat-box-sub">
-            <span class="stat-box-change <%= parseFloat(unrealizedPnLFormatted.replace(/[^0-9.-]/g, '')) >= 0 ? 'up' : 'down' %>">
-              <i class="fas fa-arrow-<%= parseFloat(unrealizedPnLFormatted.replace(/[^0-9.-]/g, '')) >= 0 ? 'up' : 'down' %>"></i>
-              Unrealized <%= unrealizedPnLFormatted %>
+            <span class="stat-box-change <%= parseFloat((unrealizedPnLFormatted || '$0').replace(/[^0-9.-]/g, '')) >= 0 ? 'up' : 'down' %>">
+              <i class="fas fa-arrow-<%= parseFloat((unrealizedPnLFormatted || '$0').replace(/[^0-9.-]/g, '')) >= 0 ? 'up' : 'down' %>"></i>
+              Unrealized <%= unrealizedPnLFormatted || '$0.00' %>
             </span>
           </div>
         <% } else { %>
-          <div class="stat-box-sub"><%= tradeStats.openPositions %> active positions</div>
+          <div class="stat-box-sub"><%= (typeof tradeStats !== 'undefined' ? tradeStats.openPositions : 0) %> active positions</div>
         <% } %>
       </div>
 
@@ -838,8 +964,8 @@ body {
           <span class="stat-box-label">Active Investments</span>
           <div class="stat-box-icon green"><i class="fas fa-chart-line"></i></div>
         </div>
-        <div class="stat-box-value"><%= activeInvestmentFormatted %></div>
-        <div class="stat-box-sub"><%= tradeStats.openPositions %> open trades</div>
+        <div class="stat-box-value"><%= activeInvestmentFormatted || '$0.00' %></div>
+        <div class="stat-box-sub"><%= (typeof tradeStats !== 'undefined' ? tradeStats.openPositions : 0) %> open trades</div>
       </div>
 
       <!-- Total P&L -->
@@ -848,10 +974,13 @@ body {
           <span class="stat-box-label">Total Profit/Loss</span>
           <div class="stat-box-icon blue"><i class="fas fa-wallet"></i></div>
         </div>
-        <div class="stat-box-value <%= parseFloat(totalPnLFormatted.replace(/[^0-9.-]/g, '')) >= 0 ? 'positive' : 'negative' %>">
-          <%= parseFloat(totalPnLFormatted.replace(/[^0-9.-]/g, '')) >= 0 ? '+' : '' %><%= totalPnLFormatted %>
+        <div class="stat-box-value <%= parseFloat((totalPnLFormatted || '$0').replace(/[^0-9.-]/g, '')) >= 0 ? 'positive' : 'negative' %>">
+          <%= parseFloat((totalPnLFormatted || '$0').replace(/[^0-9.-]/g, '')) >= 0 ? '+' : '' %><%= totalPnLFormatted || '$0.00' %>
         </div>
-        <div class="stat-box-sub"><%= tradeStats.winningTrades %>W / <%= tradeStats.losingTrades %>L &bull; <%= tradeStats.winRate %>% win rate</div>
+        <div class="stat-box-sub">
+          <%= (typeof tradeStats !== 'undefined' ? tradeStats.winningTrades : 0) %>W / <%= (typeof tradeStats !== 'undefined' ? tradeStats.losingTrades : 0) %>L 
+          &bull; <%= (typeof tradeStats !== 'undefined' ? tradeStats.winRate : 0) %>% win rate
+        </div>
       </div>
 
       <!-- Total Deposits -->
@@ -878,12 +1007,12 @@ body {
           <div class="chart-area">
             <div class="chart-header">
               <div class="chart-value-group">
-                <div class="chart-main-value"><%= balanceFormatted %></div>
+                <div class="chart-main-value"><%= balanceFormatted || '$0.00' %></div>
                 <div class="chart-sub-value">
-                  Available Balance &bull; <%= user.currency || 'USD' %>
-                  <span class="chart-badge <%= parseFloat(totalPnLFormatted.replace(/[^0-9.-]/g, '')) >= 0 ? 'up' : 'down' %>">
-                    <i class="fas fa-arrow-<%= parseFloat(totalPnLFormatted.replace(/[^0-9.-]/g, '')) >= 0 ? 'up' : 'down' %>"></i>
-                    <%= tradeStats.winRate %>% win rate
+                  Balance Overview &bull; <%= user.currency || 'USD' %>
+                  <span class="chart-badge <%= parseFloat((totalPnLFormatted || '$0').replace(/[^0-9.-]/g, '')) >= 0 ? 'up' : 'down' %>">
+                    <i class="fas fa-arrow-<%= parseFloat((totalPnLFormatted || '$0').replace(/[^0-9.-]/g, '')) >= 0 ? 'up' : 'down' %>"></i>
+                    <%= (typeof tradeStats !== 'undefined' ? tradeStats.winRate : 0) %>% win rate
                   </span>
                 </div>
               </div>
@@ -901,7 +1030,7 @@ body {
         </div>
 
         <!-- Active Positions -->
-        <% if (activeInvestments && activeInvestments.length > 0) { %>
+        <% if (typeof activeInvestments !== 'undefined' && activeInvestments && activeInvestments.length > 0) { %>
         <div class="card reveal" style="margin-top: 20px;">
           <div class="card-header">
             <h3 class="card-title"><i class="fas fa-briefcase"></i> Active Positions</h3>
@@ -913,23 +1042,26 @@ body {
               <div class="position-item">
                 <div class="position-info">
                   <div class="position-pair">
-                    <span class="position-symbol"><%= trade.pair_symbol || trade.symbol %></span>
-                    <span class="position-name"><%= trade.pair_name %></span>
+                    <span class="position-symbol"><%= trade.pair_symbol || trade.symbol || 'N/A' %></span>
+                    <span class="position-name"><%= trade.pair_name || '' %></span>
                   </div>
-                  <span class="position-tag <%= trade.direction %>"><%= trade.direction.toUpperCase() %></span>
+                  <span class="position-tag <%= trade.direction || 'buy' %>"><%= (trade.direction || 'buy').toUpperCase() %></span>
                 </div>
                 <div class="position-metrics">
                   <div class="position-metric">
                     <div class="position-metric-label">Entry Price</div>
-                    <div class="position-metric-value"><%= formatCurrency(trade.converted_entry_price || trade.entry_price, displayCurrency) %></div>
+                    <div class="position-metric-value">
+                      <%= typeof formatCurrency !== 'undefined' ? formatCurrency(trade.converted_entry_price || trade.entry_price, displayCurrency) : (trade.converted_entry_price || trade.entry_price || '0') %>
+                    </div>
                   </div>
                   <div class="position-metric">
                     <div class="position-metric-label">Lot Size</div>
-                    <div class="position-metric-value"><%= trade.lot_size %></div>
+                    <div class="position-metric-value"><%= trade.lot_size || '0' %></div>
                   </div>
                 </div>
-                <div class="position-pnl <%= parseFloat(trade.converted_profit_loss || trade.profit_loss) >= 0 ? 'positive' : 'negative' %>">
-                  <%= parseFloat(trade.converted_profit_loss || trade.profit_loss) >= 0 ? '+' : '' %><%= formatCurrency(trade.converted_profit_loss || trade.profit_loss, displayCurrency) %>
+                <div class="position-pnl <%= parseFloat(trade.converted_profit_loss || trade.profit_loss || 0) >= 0 ? 'positive' : 'negative' %>">
+                  <%= parseFloat(trade.converted_profit_loss || trade.profit_loss || 0) >= 0 ? '+' : '' %>
+                  <%= typeof formatCurrency !== 'undefined' ? formatCurrency(trade.converted_profit_loss || trade.profit_loss, displayCurrency) : (trade.converted_profit_loss || trade.profit_loss || '0') %>
                 </div>
               </div>
               <% }) %>
@@ -939,7 +1071,7 @@ body {
         <% } %>
 
         <!-- Recent Activity -->
-        <% if (recentTrades && recentTrades.length > 0) { %>
+        <% if (typeof recentTrades !== 'undefined' && recentTrades && recentTrades.length > 0) { %>
         <div class="card reveal" style="margin-top: 20px;">
           <div class="card-header">
             <h3 class="card-title"><i class="fas fa-list-alt"></i> Recent Trading Activity</h3>
@@ -950,15 +1082,18 @@ body {
               <div class="activity-item">
                 <div class="activity-info">
                   <div class="activity-title">
-                    <%= trade.direction.toUpperCase() %> <%= trade.pair_symbol %>
-                    <span class="pl-badge <%= trade.profit_loss > 0 ? 'positive' : 'negative' %>">
-                      <%= trade.profit_loss > 0 ? '+' : '' %>$<%= parseFloat(trade.profit_loss).toFixed(2) %>
+                    <%= (trade.direction || 'buy').toUpperCase() %> <%= trade.pair_symbol || 'N/A' %>
+                    <span class="pl-badge <%= (trade.profit_loss || 0) > 0 ? 'positive' : 'negative' %>">
+                      <%= (trade.profit_loss || 0) > 0 ? '+' : '' %>$<%= parseFloat(trade.profit_loss || 0).toFixed(2) %>
                     </span>
                   </div>
-                  <div class="activity-meta"><%= new Date(trade.closed_at).toLocaleDateString() %> &bull; <%= trade.lot_size %> lots @ <%= trade.leverage_used %>x</div>
+                  <div class="activity-meta">
+                    <%= trade.closed_at ? new Date(trade.closed_at).toLocaleDateString() : 'N/A' %> 
+                    &bull; <%= trade.lot_size || 0 %> lots @ <%= trade.leverage_used || 1 %>x
+                  </div>
                 </div>
-                <div class="activity-value <%= trade.profit_loss > 0 ? 'positive' : 'negative' %>">
-                  <%= trade.profit_loss > 0 ? '+' : '' %>$<%= Math.abs(parseFloat(trade.profit_loss)).toFixed(2) %>
+                <div class="activity-value <%= (trade.profit_loss || 0) > 0 ? 'positive' : 'negative' %>">
+                  <%= (trade.profit_loss || 0) > 0 ? '+' : '' %>$<%= Math.abs(parseFloat(trade.profit_loss || 0)).toFixed(2) %>
                 </div>
               </div>
               <% }) %>
@@ -1053,7 +1188,7 @@ body {
                 </div>
               </a>
 
-              <% if (user.role === 'admin') { %>
+              <% if (typeof user !== 'undefined' && user.role === 'admin') { %>
               <a href="/admin" class="widget-item">
                 <div class="widget-icon red"><i class="fas fa-shield-alt"></i></div>
                 <div class="widget-content">
