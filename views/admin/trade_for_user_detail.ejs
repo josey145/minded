@@ -2,320 +2,353 @@
 <%- include('../partials/navbar') %>
 
 <style>
-    .admin-detail-container {
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: 24px 16px;
-    }
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
-    .page-header {
-        margin-bottom: 32px;
-    }
+:root {
+    --void: #0a0a0f;
+    --void-elevated: #111118;
+    --void-card: #14141d;
+    --void-hover: #1a1a26;
+    --border: #1e1e2e;
+    --border-light: rgba(255,255,255,0.06);
 
-    .page-title {
-        font-size: 32px;
-        font-weight: 800;
-        color: #f4f4f5;
-        margin-bottom: 8px;
-        background: linear-gradient(135deg, #8b5cf6, #a78bfa);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
+    --text-primary: #f4f4f5;
+    --text-secondary: #a1a1aa;
+    --text-muted: #52525b;
 
-    .page-subtitle {
-        color: #71717a;
-        font-size: 15px;
-    }
+    --mint: #2dd4a7;
+    --mint-glow: rgba(45, 212, 167, 0.15);
+    --mint-soft: rgba(45, 212, 167, 0.1);
+    --indigo: #6366f1;
+    --indigo-glow: rgba(99, 102, 241, 0.15);
+    --indigo-soft: rgba(99, 102, 241, 0.1);
+    --alert: #ef4444;
+    --alert-glow: rgba(239, 68, 68, 0.15);
+    --alert-soft: rgba(239, 68, 68, 0.1);
+    --amber: #f59e0b;
+    --amber-soft: rgba(245, 158, 11, 0.1);
 
-    /* Stats Cards */
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 16px;
-        margin-bottom: 32px;
-    }
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
 
-    .stat-card {
-        background: linear-gradient(135deg, #1a1a2e, #16213e);
-        border: 1px solid #2a2a3e;
-        border-radius: 16px;
-        padding: 24px;
-        position: relative;
-        overflow: hidden;
-    }
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+}
 
-    .stat-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 3px;
-    }
+* { box-sizing: border-box; }
 
-    .stat-card.balance::before { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
-    .stat-card.equity::before { background: linear-gradient(90deg, #22c55e, #4ade80); }
-    .stat-card.margin::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
-    .stat-card.free-margin::before { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+.admin-detail-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 100px 16px 40px;
+    font-family: var(--font-body);
+}
 
-    .stat-label {
-        color: #71717a;
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-bottom: 8px;
-    }
+.page-header { margin-bottom: 32px; }
 
-    .stat-value {
-        font-size: 28px;
-        font-weight: 800;
-        color: #f4f4f5;
-        font-family: 'Courier New', monospace;
-    }
+.page-title {
+    font-family: var(--font-display);
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    letter-spacing: -0.3px;
+}
 
-    /* Panels */
-    .panel {
-        background: #111118;
-        border: 1px solid #1e1e2e;
-        border-radius: 20px;
-        padding: 24px;
-        margin-bottom: 24px;
-    }
+.page-subtitle { color: var(--text-secondary); font-size: 14px; font-family: var(--font-mono); }
 
-    .panel-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-    }
+.live-indicator { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--mint); margin-top: 8px; font-weight: 500; }
+.live-dot { width: 7px; height: 7px; background-color: var(--mint); border-radius: 50%; box-shadow: 0 0 8px var(--mint-glow); animation: pulse 2s infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-    .panel-title {
-        font-size: 18px;
-        font-weight: 700;
-        color: #f4f4f5;
-    }
+.stale-banner {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(245,158,11,0.02));
+    border: 1px solid rgba(245,158,11,0.2);
+    color: var(--amber);
+    padding: 12px 18px;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    margin-bottom: 20px;
+}
+.stale-banner.visible { display: flex; }
 
-    /* Trade Form */
-    .trade-form {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 16px;
-        margin-bottom: 24px;
-    }
+/* Stats Cards */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+}
 
-    .form-group {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-    }
+.stat-card {
+    background-color: var(--void-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+}
+.stat-card:hover { border-color: var(--border-light); transform: translateY(-2px); }
 
-    .form-label {
-        color: #a1a1aa;
-        font-size: 13px;
-        font-weight: 500;
-    }
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+}
 
-    .form-input, .form-select {
-        background: #0d0d14;
-        border: 1px solid #2a2a3e;
-        border-radius: 10px;
-        padding: 12px 16px;
-        color: #f4f4f5;
-        font-size: 14px;
-        font-family: 'Courier New', monospace;
-    }
+.stat-card.balance::before { background: linear-gradient(90deg, var(--indigo), transparent); }
+.stat-card.equity::before { background: linear-gradient(90deg, var(--mint), transparent); }
+.stat-card.margin::before { background: linear-gradient(90deg, var(--amber), transparent); }
+.stat-card.free-margin::before { background: linear-gradient(90deg, #3b82f6, transparent); }
 
-    .form-input:focus, .form-select:focus {
-        outline: none;
-        border-color: #8b5cf6;
-    }
+.stat-label {
+    color: var(--text-secondary);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
 
-    .btn-trade {
-        background: linear-gradient(135deg, #8b5cf6, #6d28d9);
-        color: white;
-        border: none;
-        padding: 14px 32px;
-        border-radius: 10px;
-        font-size: 15px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
+.stat-value {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    letter-spacing: -0.3px;
+}
 
-    .btn-trade:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
-    }
+/* Panels */
+.panel {
+    background: var(--void-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin-bottom: 24px;
+}
 
-    .btn-buy {
-        background: linear-gradient(135deg, #22c55e, #16a34a);
-    }
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
 
-    .btn-sell {
-        background: linear-gradient(135deg, #ef4444, #dc2626);
-    }
+.panel-title {
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
 
-    /* Positions Table */
-    .positions-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
+/* Trade Form */
+.trade-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
 
-    .positions-table th {
-        color: #71717a;
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        text-align: left;
-        padding: 14px 16px;
-        border-bottom: 1px solid #2a2a3e;
-        font-weight: 600;
-    }
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
 
-    .positions-table td {
-        padding: 16px;
-        border-bottom: 1px solid #1e1e2e;
-        color: #a1a1aa;
-        font-size: 14px;
-    }
+.form-label {
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
 
-    .positions-table tr:hover {
-        background: rgba(139, 92, 246, 0.05);
-    }
+.form-input, .form-select {
+    background: var(--void-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: var(--font-mono);
+    transition: border-color 0.2s ease;
+}
 
-    .position-pair {
-        font-weight: 700;
-        color: #f4f4f5;
-    }
+.form-input:focus, .form-select:focus {
+    outline: none;
+    border-color: var(--indigo);
+    box-shadow: 0 0 0 3px var(--indigo-soft);
+}
 
-    .position-direction {
-        padding: 4px 10px;
-        border-radius: 6px;
-        font-size: 11px;
-        font-weight: 700;
-        text-transform: uppercase;
-    }
+.btn-trade {
+    background: linear-gradient(135deg, var(--indigo), #4f46e5);
+    color: white;
+    border: none;
+    padding: 14px 32px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 700;
+    font-family: var(--font-body);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
 
-    .position-direction.buy {
-        background: rgba(34, 197, 94, 0.2);
-        color: #22c55e;
-    }
+.btn-trade:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px var(--indigo-glow);
+}
 
-    .position-direction.sell {
-        background: rgba(239, 68, 68, 0.2);
-        color: #ef4444;
-    }
+.btn-buy { background: linear-gradient(135deg, var(--mint), #22b892); color: #06251c; }
+.btn-buy:hover { box-shadow: 0 8px 20px var(--mint-glow); }
 
-    .position-price {
-        font-family: 'Courier New', monospace;
-        font-weight: 600;
-    }
+.btn-sell { background: linear-gradient(135deg, var(--alert), #dc2626); }
+.btn-sell:hover { box-shadow: 0 8px 20px var(--alert-glow); }
 
-    .position-pnl.positive {
-        color: #22c55e;
-        font-weight: 700;
-    }
+/* Positions Table */
+.positions-table { width: 100%; border-collapse: collapse; min-width: 900px; }
 
-    .position-pnl.negative {
-        color: #ef4444;
-        font-weight: 700;
-    }
+.positions-table th {
+    color: var(--text-secondary);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    text-align: left;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+    background-color: var(--indigo-soft);
+}
 
-    .btn-close-win {
-        background: rgba(34, 197, 94, 0.15);
-        color: #22c55e;
-        border: 1px solid rgba(34, 197, 94, 0.3);
-        padding: 8px 16px;
-        border-radius: 8px;
-        font-size: 12px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
+.positions-table td {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-size: 14px;
+}
 
-    .btn-close-win:hover {
-        background: #22c55e;
-        color: white;
-    }
+.positions-table tr:hover { background: var(--void-hover); }
+.positions-table tr:last-child td { border-bottom: none; }
 
-    .btn-close-loss {
-        background: rgba(239, 68, 68, 0.15);
-        color: #ef4444;
-        border: 1px solid rgba(239, 68, 68, 0.3);
-        padding: 8px 16px;
-        border-radius: 8px;
-        font-size: 12px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
+.position-pair { font-family: var(--font-body); font-weight: 700; color: var(--text-primary); }
 
-    .btn-close-loss:hover {
-        background: #ef4444;
-        color: white;
-    }
+.position-direction {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-family: var(--font-body);
+}
 
-    .btn-force {
-        background: #1e1e2e;
-        color: #a78bfa;
-        border: 1px solid #2a2a3e;
-        padding: 6px 12px;
-        border-radius: 6px;
-        font-size: 12px;
-        font-weight: 600;
-        cursor: pointer;
-    }
+.position-direction.buy { background: var(--mint-soft); color: var(--mint); }
+.position-direction.sell { background: var(--alert-soft); color: var(--alert); }
 
-    /* Alert */
-    .alert {
-        padding: 16px 20px;
-        border-radius: 12px;
-        margin-bottom: 24px;
-        font-size: 14px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
+.position-price { font-family: var(--font-mono); font-weight: 600; color: var(--text-primary); }
 
-    .alert-success {
-        background: rgba(34, 197, 94, 0.1);
-        border: 1px solid rgba(34, 197, 94, 0.3);
-        color: #22c55e;
-    }
+.price-change { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-family: var(--font-mono); margin-top: 3px; }
+.price-change.up { color: var(--mint); }
+.price-change.down { color: var(--alert); }
 
-    .alert-error {
-        background: rgba(239, 68, 68, 0.1);
-        border: 1px solid rgba(239, 68, 68, 0.3);
-        color: #ef4444;
-    }
+.position-pnl.positive { color: var(--mint); font-weight: 700; font-family: var(--font-mono); }
+.position-pnl.negative { color: var(--alert); font-weight: 700; font-family: var(--font-mono); }
 
-    .empty-state {
-        text-align: center;
-        padding: 60px 20px;
-        color: #52525b;
-    }
+.btn-close-win {
+    background: var(--mint-soft);
+    color: var(--mint);
+    border: 1px solid rgba(45, 212, 167, 0.3);
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 700;
+    font-family: var(--font-body);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.btn-close-win:hover { background: var(--mint); color: #06251c; }
 
-    /* Mobile */
-    @media (max-width: 768px) {
-        .admin-detail-container { padding: 16px 12px; }
-        .page-title { font-size: 24px; }
-        .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-        .stat-card { padding: 16px; }
-        .stat-value { font-size: 22px; }
-        .panel { padding: 16px; }
-        .trade-form { grid-template-columns: 1fr; }
-        .positions-table { display: block; overflow-x: auto; }
-    }
+.btn-close-loss {
+    background: var(--alert-soft);
+    color: var(--alert);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 700;
+    font-family: var(--font-body);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.btn-close-loss:hover { background: var(--alert); color: white; }
+
+.btn-force {
+    background: var(--void-card);
+    color: #a5a6f6;
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--font-body);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.btn-force:hover { background: var(--void-hover); border-color: var(--border-light); }
+
+/* Alert */
+.alert {
+    padding: 16px 20px;
+    border-radius: var(--radius-md);
+    margin-bottom: 24px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--font-body);
+}
+
+.alert-success { background: var(--mint-soft); border: 1px solid rgba(45, 212, 167, 0.3); color: var(--mint); }
+.alert-error { background: var(--alert-soft); border: 1px solid rgba(239, 68, 68, 0.3); color: var(--alert); }
+
+.empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); font-family: var(--font-body); }
+
+/* Mobile */
+@media (max-width: 768px) {
+    .admin-detail-container { padding: 80px 12px 24px; }
+    .page-title { font-size: 22px; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .stat-card { padding: 16px; }
+    .stat-value { font-size: 20px; }
+    .panel { padding: 16px; }
+    .trade-form { grid-template-columns: 1fr; }
+    .positions-table { display: block; overflow-x: auto; }
+}
 </style>
 
 <div class="admin-detail-container">
     <div class="page-header">
         <h1 class="page-title">Trading for <%= targetUser.username %></h1>
         <p class="page-subtitle">
-            <%= targetUser.account_type === 'demo' ? 'Demo' : 'Real' %> Account | 
-            <%= targetUser.email %>
+            <%= targetUser.account_type === 'demo' ? 'Demo' : 'Real' %> Account &bull; <%= targetUser.email %>
         </p>
+        <div class="live-indicator">
+            <span class="live-dot"></span>
+            <span>Live Market Data</span>
+        </div>
+    </div>
+
+    <div class="stale-banner" id="staleBanner">
+        <span>⚠</span>
+        <span>Live price updates are currently unavailable. Showing last known prices.</span>
     </div>
 
     <!-- Flash Messages -->
@@ -420,6 +453,7 @@
             <% } %>
         </div>
         <% if (openPositions.length > 0) { %>
+        <div style="overflow-x: auto;">
         <table class="positions-table">
             <thead>
                 <tr>
@@ -438,14 +472,22 @@
                     <% const pnl = parseFloat(pos.profit_loss) || 0; %>
                     <% const entryPrice = parseFloat(pos.entry_price) || 0; %>
                     <% const currentPrice = parseFloat(pos.current_price) || 0; %>
-                    <tr>
+                    <% const priceDiff = pos.direction === 'buy' ? currentPrice - entryPrice : entryPrice - currentPrice; %>
+                    <tr data-position-id="<%= pos.id %>" data-symbol="<%= pos.pair_symbol %>">
                         <td class="position-pair"><%= pos.pair_symbol %></td>
                         <td>
                             <span class="position-direction <%= pos.direction %>"><%= pos.direction %></span>
                         </td>
                         <td class="position-price"><%= pos.lot_size %> lots</td>
                         <td class="position-price"><%= entryPrice.toFixed(5) %></td>
-                        <td class="position-price"><%= currentPrice.toFixed(5) %></td>
+                        <td>
+                            <span class="position-price current-price" data-symbol="<%= pos.pair_symbol %>" data-direction="<%= pos.direction %>">
+                                <%= currentPrice.toFixed(5) %>
+                            </span>
+                            <div class="price-change <%= priceDiff >= 0 ? 'up' : 'down' %>">
+                                <%= priceDiff >= 0 ? '▲' : '▼' %> <%= Math.abs(priceDiff).toFixed(5) %>
+                            </div>
+                        </td>
                         <td class="position-pnl <%= pnl >= 0 ? 'positive' : 'negative' %>">
                             <%= pnl >= 0 ? '+' : '' %><%= formatCurrency(pnl, account.currency) %>
                         </td>
@@ -475,6 +517,7 @@
                 <% }) %>
             </tbody>
         </table>
+        </div>
         <% } else { %>
         <div class="empty-state">
             <div style="font-size: 48px; margin-bottom: 16px;">📈</div>
@@ -489,6 +532,7 @@
             <h3 class="panel-title">Trade History</h3>
         </div>
         <% if (tradeHistory.length > 0) { %>
+        <div style="overflow-x: auto;">
         <table class="positions-table">
             <thead>
                 <tr>
@@ -516,12 +560,13 @@
                         <td class="position-pnl <%= pnl >= 0 ? 'positive' : 'negative' %>">
                             <%= pnl >= 0 ? '+' : '' %><%= formatCurrency(pnl, account.currency) %>
                         </td>
-                        <td><%= new Date(trade.closed_at).toLocaleDateString() %></td>
+                        <td class="position-price"><%= new Date(trade.closed_at).toLocaleDateString() %></td>
                         <td><%= trade.close_reason || 'User closed' %></td>
                     </tr>
                 <% }) %>
             </tbody>
         </table>
+        </div>
         <% } else { %>
         <div class="empty-state">
             <div style="font-size: 48px; margin-bottom: 16px;">📋</div>
@@ -530,5 +575,60 @@
         <% } %>
     </div>
 </div>
+
+<script>
+    // Auto-refresh live current prices for open positions (mirrors /trading/positions behavior)
+    let priceRefreshFailCount = 0;
+    const MAX_SILENT_FAILS = 3;
+
+    async function refreshPrices() {
+        try {
+            const response = await fetch('/trading/api/prices');
+
+            const contentType = response.headers.get('content-type') || '';
+            if (!response.ok || !contentType.includes('application/json')) {
+                throw new Error(`Prices endpoint returned ${response.status} (${contentType || 'no content-type'})`);
+            }
+
+            const prices = await response.json();
+            priceRefreshFailCount = 0;
+            const banner = document.getElementById('staleBanner');
+            if (banner) banner.classList.remove('visible');
+
+            prices.forEach(p => {
+                const cells = document.querySelectorAll(`.current-price[data-symbol="${p.symbol}"]`);
+                cells.forEach(cell => {
+                    const oldPrice = parseFloat(cell.textContent);
+                    const newPrice = parseFloat(p.bid);
+
+                    cell.textContent = newPrice.toFixed(5);
+
+                    if (newPrice > oldPrice) {
+                        cell.style.color = '#2dd4a7';
+                    } else if (newPrice < oldPrice) {
+                        cell.style.color = '#ef4444';
+                    }
+                    setTimeout(() => cell.style.color = '', 800);
+                });
+            });
+        } catch (err) {
+            priceRefreshFailCount++;
+            if (priceRefreshFailCount <= MAX_SILENT_FAILS) {
+                console.warn('Price refresh failed:', err.message);
+            }
+            if (priceRefreshFailCount === MAX_SILENT_FAILS) {
+                console.warn('Suppressing further price-refresh error logs; endpoint /trading/api/prices still unavailable.');
+                const banner = document.getElementById('staleBanner');
+                if (banner) banner.classList.add('visible');
+            }
+        }
+    }
+
+    // Only poll if there are open positions on the page
+    if (document.querySelector('.current-price')) {
+        setInterval(refreshPrices, 3000);
+        refreshPrices();
+    }
+</script>
 
 <%- include('../partials/footer') %>
