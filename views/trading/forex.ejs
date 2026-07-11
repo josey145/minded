@@ -16,7 +16,9 @@
         --text-secondary: #94a3b8;
         --text-muted: #64748b;
         --accent-green: #22c55e;
+        --accent-green-dark: #16a34a;
         --accent-red: #ef4444;
+        --accent-red-dark: #dc2626;
         --accent-blue: #3b82f6;
         --accent-purple: #a78bfa;
         --accent-orange: #f59e0b;
@@ -30,6 +32,7 @@
         color: var(--text-primary);
         min-height: 100vh;
         -webkit-font-smoothing: antialiased;
+        overflow-x: hidden;
     }
 
     /* ========== TOP BAR ========== */
@@ -46,11 +49,7 @@
         z-index: 1000;
     }
 
-    .topbar-left {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
+    .topbar-left { display: flex; align-items: center; gap: 12px; }
 
     .menu-toggle {
         display: none;
@@ -76,11 +75,7 @@
         text-decoration: none;
     }
 
-    .topbar-right {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
 
     .balance-chip {
         display: flex;
@@ -99,10 +94,7 @@
         font-size: 14px;
     }
 
-    .account-switcher-top {
-        display: flex;
-        gap: 6px;
-    }
+    .account-switcher-top { display: flex; gap: 6px; }
 
     .account-switcher-top button {
         padding: 6px 14px;
@@ -208,251 +200,321 @@
         min-height: calc(100vh - var(--topbar-height));
     }
 
-    /* ========== STATS CARDS ========== */
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 16px;
-        margin-bottom: 20px;
-    }
-
-    .stat-card {
-        background: linear-gradient(135deg, var(--bg-secondary), var(--bg-card));
-        border: 1px solid var(--border-color);
-        border-radius: 14px;
-        padding: 18px;
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
-
-    .stat-header {
+    /* ========== PAIRS TICKER BAR ========== */
+    .pairs-ticker {
         display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 10px;
-    }
-    .stat-label { color: var(--text-secondary); font-size: 12px; font-weight: 500; }
-    .stat-icon { font-size: 16px; }
-    .stat-value { font-size: 22px; font-weight: 800; font-family: 'Courier New', monospace; }
-    .stat-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; display: flex; align-items: center; gap: 4px; }
-    .stat-sub.positive { color: var(--accent-green); }
-    .stat-sub.negative { color: var(--accent-red); }
-
-    /* ========== TRADING GRID ========== */
-    .trading-grid {
-        display: grid;
-        grid-template-columns: 1fr 340px;
-        gap: 20px;
-    }
-
-    /* ========== CHART CARD ========== */
-    .chart-card {
-        background: var(--bg-secondary);
-        border: 1px solid var(--border-color);
-        border-radius: 14px;
-        padding: 18px;
-        margin-bottom: 16px;
-    }
-    .chart-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 14px;
-        flex-wrap: wrap;
-        gap: 10px;
-    }
-    .chart-header h3 { margin: 0; font-size: 18px; color: var(--text-primary); }
-    .chart-header p { margin: 3px 0 0; color: var(--text-muted); font-size: 12px; }
-    .chart-price { text-align: right; }
-    .chart-price-main { font-size: 24px; font-weight: 800; color: var(--text-primary); font-family: 'Courier New', monospace; }
-    .chart-price-change { color: var(--accent-green); font-size: 12px; font-weight: 600; }
-    .chart-area { height: 300px; background: var(--bg-card); border-radius: 10px; }
-
-    /* ========== PAIRS SECTION ========== */
-    .pairs-card {
-        background: var(--bg-secondary);
-        border: 1px solid var(--border-color);
-        border-radius: 14px;
-        padding: 18px;
-    }
-    .pairs-card h3 {
-        margin: 0 0 14px;
-        font-size: 15px;
-        color: var(--text-primary);
-        display: flex;
-        align-items: center;
         gap: 8px;
+        overflow-x: auto;
+        padding: 12px;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        margin-bottom: 16px;
+        scrollbar-width: thin;
+        scrollbar-color: var(--border-color) transparent;
     }
-    .pairs-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        gap: 10px;
-    }
-    .pair-card {
+    .pairs-ticker::-webkit-scrollbar { height: 4px; }
+    .pairs-ticker::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 2px; }
+
+    .ticker-item {
+        flex-shrink: 0;
         background: var(--bg-card);
         border: 2px solid transparent;
         border-radius: 10px;
-        padding: 14px;
+        padding: 10px 16px;
         cursor: pointer;
         transition: all 0.2s;
+        min-width: 140px;
+        text-align: center;
     }
-    .pair-card:hover { border-color: var(--accent-purple); background: var(--bg-hover); transform: translateY(-2px); }
-    .pair-card.active { border-color: var(--accent-green); background: rgba(34, 197, 94, 0.08); }
-    .pair-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .pair-symbol { font-weight: 700; color: #fff; font-size: 13px; }
-    .pair-status { width: 7px; height: 7px; background: var(--accent-green); border-radius: 50%; animation: pulse 2s infinite; }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-    .pair-prices { display: flex; justify-content: space-between; margin-bottom: 5px; }
-    .price-box { text-align: center; }
-    .price-label-small { font-size: 9px; color: var(--text-muted); text-transform: uppercase; }
-    .price-value-small { font-size: 14px; font-weight: 700; font-family: 'Courier New', monospace; }
-    .price-value-small.bid { color: var(--accent-red); }
-    .price-value-small.ask { color: var(--accent-green); }
-    .pair-spread { font-size: 10px; color: var(--text-muted); text-align: center; padding-top: 5px; border-top: 1px solid var(--border-color); }
+    .ticker-item:hover { border-color: var(--accent-purple); background: var(--bg-hover); }
+    .ticker-item.active { border-color: var(--accent-green); background: rgba(34, 197, 94, 0.08); }
+    .ticker-symbol { font-weight: 700; font-size: 14px; color: #fff; margin-bottom: 4px; }
+    .ticker-price { font-family: 'Courier New', monospace; font-size: 13px; font-weight: 600; }
+    .ticker-price.up { color: var(--accent-green); }
+    .ticker-price.down { color: var(--accent-red); }
+
+    /* ========== TRADING TERMINAL LAYOUT ========== */
+    .terminal-grid {
+        display: grid;
+        grid-template-columns: 1fr 380px;
+        gap: 16px;
+        height: calc(100vh - var(--topbar-height) - 140px);
+        min-height: 500px;
+    }
+
+    /* ========== CHART AREA ========== */
+    .chart-section {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .chart-header-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 16px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .chart-info h2 { font-size: 20px; margin: 0; color: var(--text-primary); }
+    .chart-info p { margin: 2px 0 0; color: var(--text-muted); font-size: 12px; }
+
+    .chart-price-display {
+        text-align: right;
+    }
+    .chart-price-main {
+        font-size: 28px;
+        font-weight: 800;
+        font-family: 'Courier New', monospace;
+        color: var(--text-primary);
+    }
+    .chart-price-change {
+        font-size: 13px;
+        font-weight: 600;
+    }
+    .chart-price-change.up { color: var(--accent-green); }
+    .chart-price-change.down { color: var(--accent-red); }
+
+    .chart-container {
+        flex: 1;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 12px;
+        min-height: 300px;
+    }
 
     /* ========== TRADE PANEL ========== */
     .trade-panel {
         background: var(--bg-secondary);
         border: 1px solid var(--border-color);
         border-radius: 14px;
-        padding: 18px;
-        height: fit-content;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        overflow-y: auto;
     }
-    .trade-panel h3 { margin: 0 0 14px; font-size: 15px; color: var(--text-primary); display: flex; align-items: center; gap: 8px; }
-    .selected-pair-box { background: var(--bg-card); border-radius: 10px; padding: 14px; margin-bottom: 14px; text-align: center; }
-    .selected-pair-label { font-size: 11px; color: var(--text-muted); margin-bottom: 3px; }
-    .selected-pair-value { font-size: 18px; font-weight: 700; color: #fff; }
 
-    .direction-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
-    .direction-tab {
-        flex: 1;
-        padding: 12px;
-        border-radius: 8px;
+    .trade-panel-header {
+        text-align: center;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .trade-panel-header h3 { margin: 0; font-size: 16px; color: var(--text-primary); }
+
+    .selected-pair-display {
+        background: var(--bg-card);
+        border-radius: 10px;
+        padding: 14px;
+        text-align: center;
+    }
+    .selected-pair-display .label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+    .selected-pair-display .value { font-size: 22px; font-weight: 700; color: #fff; }
+    .selected-pair-display .sub { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+
+    /* Direction Buttons */
+    .direction-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .direction-btn {
+        padding: 16px;
+        border-radius: 12px;
         border: none;
-        font-size: 13px;
+        font-size: 15px;
         font-weight: 700;
         cursor: pointer;
         transition: all 0.2s;
         text-transform: uppercase;
         display: flex;
+        flex-direction: column;
         align-items: center;
-        justify-content: center;
-        gap: 5px;
+        gap: 6px;
+        letter-spacing: 0.5px;
     }
-    .direction-tab.buy { background: rgba(34,197,94,0.1); color: var(--accent-green); }
-    .direction-tab.buy.active { background: var(--accent-green); color: white; }
-    .direction-tab.sell { background: rgba(239,68,68,0.1); color: var(--accent-red); }
-    .direction-tab.sell.active { background: var(--accent-red); color: white; }
+    .direction-btn i { font-size: 20px; }
 
-    .form-group { margin-bottom: 12px; }
-    .form-label {
-        display: block;
-        font-size: 10px;
-        color: var(--text-muted);
-        margin-bottom: 5px;
-        text-transform: uppercase;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 5px;
+    .direction-btn.buy {
+        background: rgba(34, 197, 94, 0.1);
+        color: var(--accent-green);
+        border: 2px solid rgba(34, 197, 94, 0.3);
     }
-    .form-input, .form-select {
+    .direction-btn.buy:hover, .direction-btn.buy.active {
+        background: var(--accent-green);
+        color: white;
+        border-color: var(--accent-green);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(34, 197, 94, 0.3);
+    }
+
+    .direction-btn.sell {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--accent-red);
+        border: 2px solid rgba(239, 68, 68, 0.3);
+    }
+    .direction-btn.sell:hover, .direction-btn.sell.active {
+        background: var(--accent-red);
+        color: white;
+        border-color: var(--accent-red);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3);
+    }
+
+    /* Custom Amount Input */
+    .amount-input-group {
+        position: relative;
+    }
+
+    .amount-input-group .currency-label {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        font-size: 14px;
+        font-weight: 600;
+        pointer-events: none;
+    }
+
+    .amount-input {
         width: 100%;
         background: var(--bg-card);
         border: 1px solid var(--border-color);
-        border-radius: 8px;
-        padding: 10px 12px;
+        border-radius: 10px;
+        padding: 14px 14px 14px 32px;
+        color: var(--text-primary);
+        font-size: 18px;
+        font-weight: 700;
+        font-family: 'Courier New', monospace;
+        transition: border-color 0.2s;
+    }
+    .amount-input:focus {
+        outline: none;
+        border-color: var(--accent-purple);
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+    }
+    .amount-input::placeholder { color: var(--text-muted); font-weight: 400; }
+
+    .amount-presets {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .preset-btn {
+        padding: 6px 12px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        color: var(--text-secondary);
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .preset-btn:hover {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+        border-color: var(--accent-purple);
+    }
+
+    /* Leverage */
+    .leverage-select {
+        width: 100%;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 12px 14px;
         color: var(--text-primary);
         font-size: 14px;
-        font-family: 'Courier New', monospace;
+        cursor: pointer;
     }
-    .form-input:focus, .form-select:focus { outline: none; border-color: var(--accent-purple); }
+    .leverage-select:focus { outline: none; border-color: var(--accent-purple); }
 
-    .calculation-box { background: var(--bg-card); border-radius: 10px; padding: 14px; margin-bottom: 14px; }
-    .calc-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 12px; }
-    .calc-row:last-child { margin-bottom: 0; padding-top: 6px; border-top: 1px solid var(--border-color); font-weight: 600; }
-    .calc-label { color: var(--text-muted); }
-    .calc-value { color: #fff; font-family: 'Courier New', monospace; }
-    .calc-value.success { color: var(--accent-green); }
-    .calc-value.warning { color: var(--accent-orange); }
-
-    .btn-submit {
-        width: 100%;
-        padding: 14px;
+    /* Calculation Box */
+    .calc-box {
+        background: var(--bg-card);
         border-radius: 10px;
+        padding: 14px;
+    }
+    .calc-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 12px;
+    }
+    .calc-row:last-child { margin-bottom: 0; padding-top: 8px; border-top: 1px solid var(--border-color); }
+    .calc-label { color: var(--text-muted); }
+    .calc-value { color: #fff; font-family: 'Courier New', monospace; font-weight: 600; }
+    .calc-value.highlight { color: var(--accent-green); }
+
+    /* Submit Button */
+    .btn-execute {
+        width: 100%;
+        padding: 16px;
+        border-radius: 12px;
         border: none;
-        font-size: 14px;
+        font-size: 16px;
         font-weight: 700;
         cursor: pointer;
         transition: all 0.2s;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 1px;
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 8px;
+        margin-top: auto;
     }
-    .btn-submit.buy { background: var(--accent-green); color: white; }
-    .btn-submit.buy:hover { background: #16a34a; }
-    .btn-submit.sell { background: var(--accent-red); color: white; }
-    .btn-submit.sell:hover { background: #dc2626; }
-    .btn-submit:disabled { background: #374151; color: #6b7280; cursor: not-allowed; }
 
-    /* ========== POSITIONS TABLE ========== */
-    .positions-card {
-        background: var(--bg-secondary);
-        border: 1px solid var(--border-color);
-        border-radius: 14px;
-        padding: 18px;
-        margin-top: 16px;
-    }
-    .positions-card h3 { margin: 0 0 14px; font-size: 15px; color: var(--text-primary); }
-    .positions-table { width: 100%; border-collapse: collapse; }
-    .positions-table th {
-        color: var(--text-muted);
-        font-size: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        text-align: left;
-        padding: 10px;
-        border-bottom: 1px solid var(--border-color);
-        white-space: nowrap;
-    }
-    .positions-table td {
-        padding: 12px 10px;
-        border-bottom: 1px solid var(--border-color);
-        font-size: 13px;
-        white-space: nowrap;
-    }
-    .positions-table tr:hover { background: rgba(255,255,255,0.02); }
-    .position-type {
-        text-transform: uppercase;
-        font-size: 10px;
-        font-weight: 700;
-        padding: 3px 8px;
-        border-radius: 4px;
-        display: inline-block;
-    }
-    .position-type.buy { background: rgba(34,197,94,0.15); color: var(--accent-green); }
-    .position-type.sell { background: rgba(239,68,68,0.15); color: var(--accent-red); }
-    .position-pnl { font-family: 'Courier New', monospace; font-weight: 700; }
-    .position-pnl.positive { color: var(--accent-green); }
-    .position-pnl.negative { color: var(--accent-red); }
-    .btn-close {
-        background: var(--accent-red);
+    .btn-execute.buy {
+        background: linear-gradient(135deg, var(--accent-green), var(--accent-green-dark));
         color: white;
-        border: none;
-        padding: 6px 12px;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 11px;
-        font-weight: 600;
-        transition: all 0.2s;
+        box-shadow: 0 4px 16px rgba(34, 197, 94, 0.3);
     }
-    .btn-close:hover { background: #dc2626; }
+    .btn-execute.buy:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 24px rgba(34, 197, 94, 0.4);
+    }
 
-    .empty-state { text-align: center; padding: 32px; color: var(--text-muted); }
-    .empty-state i { font-size: 28px; margin-bottom: 10px; opacity: 0.3; }
+    .btn-execute.sell {
+        background: linear-gradient(135deg, var(--accent-red), var(--accent-red-dark));
+        color: white;
+        box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3);
+    }
+    .btn-execute.sell:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 24px rgba(239, 68, 68, 0.4);
+    }
+
+    .btn-execute:disabled {
+        background: #374151;
+        color: #6b7280;
+        cursor: not-allowed;
+        box-shadow: none;
+        transform: none;
+    }
+
+    /* ========== EMPTY STATE ========== */
+    .empty-trade-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+        text-align: center;
+        color: var(--text-muted);
+    }
+    .empty-trade-state i { font-size: 48px; margin-bottom: 16px; opacity: 0.3; }
+    .empty-trade-state h4 { color: var(--text-primary); margin-bottom: 8px; }
+    .empty-trade-state p { font-size: 13px; max-width: 280px; }
 
     /* ========== ALERTS ========== */
     .alert {
@@ -467,7 +529,7 @@
     .alert-success { background: rgba(34,197,94,0.1); border: 1px solid var(--accent-green); color: var(--accent-green); }
     .alert-error { background: rgba(239,68,68,0.1); border: 1px solid var(--accent-red); color: var(--accent-red); }
 
-    /* ========== ADMIN MODE BADGE ========== */
+    /* ========== ADMIN BADGE ========== */
     .admin-badge {
         display: inline-flex;
         align-items: center;
@@ -481,85 +543,30 @@
     .admin-badge.force_win { background: rgba(34, 197, 94, 0.15); color: var(--accent-green); }
     .admin-badge.force_loss { background: rgba(239, 68, 68, 0.15); color: var(--accent-red); }
 
-    /* ========== TABLE SCROLL ========== */
-    .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .table-scroll::-webkit-scrollbar { height: 6px; }
-    .table-scroll::-webkit-scrollbar-track { background: var(--bg-card); border-radius: 3px; }
-    .table-scroll::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
-
     /* ========== MOBILE RESPONSIVE ========== */
     @media (max-width: 1024px) {
-        .trading-grid { grid-template-columns: 1fr; }
+        .terminal-grid {
+            grid-template-columns: 1fr;
+            height: auto;
+        }
         .trade-panel { max-width: 100%; }
+        .chart-container { min-height: 250px; }
     }
 
     @media (max-width: 768px) {
         .menu-toggle { display: flex; align-items: center; justify-content: center; }
         .sidebar { transform: translateX(-100%); }
         .sidebar.open { transform: translateX(0); }
-        .main-content { margin-left: 0; padding: 16px; }
-        .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-        .stat-card { padding: 14px; }
-        .stat-value { font-size: 18px; }
+        .main-content { margin-left: 0; padding: 12px; }
+        .topbar { padding: 0 12px; }
+        .brand { font-size: 16px; }
         .balance-chip span { display: none; }
         .account-switcher-top button span { display: none; }
         .account-switcher-top button { padding: 6px 10px; }
-        .pairs-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-        .pair-card { padding: 12px; }
-        .chart-area { height: 240px; }
-        .topbar { padding: 0 12px; }
-        .brand { font-size: 16px; }
+        .chart-price-main { font-size: 22px; }
+        .terminal-grid { gap: 12px; }
     }
 
-    @media (max-width: 768px) {
-  html { font-size: 15px; }
-  
-  .sidebar { 
-    padding-top: env(safe-area-inset-top);
-  }
-  
-  .stats-grid { 
-    grid-template-columns: 1fr; /* stack vertically */
-  }
-  
-  .chart-area { 
-    height: 200px; /* not 240px */
-  }
-  
-  .direction-tabs { 
-    flex-direction: column; 
-    gap: 8px; 
-  }
-  
-  input, select, button { 
-    min-height: 44px; 
-    min-width: 44px; 
-  }
-  
-  input { 
-    font-size: 16px; /* prevents iOS zoom on focus */
-    padding: 14px 16px; 
-  }
-}
-
-* { 
-  -webkit-tap-highlight-color: transparent; 
-  touch-action: manipulation; 
-}
-
-    @media (max-width: 480px) {
-        .stats-grid { grid-template-columns: 1fr; }
-        .pairs-grid { grid-template-columns: 1fr; }
-        .chart-header { flex-direction: column; align-items: flex-start; }
-        .chart-price { text-align: left; }
-        .chart-price-main { font-size: 20px; }
-        .direction-tab { font-size: 12px; padding: 10px; }
-        .main-content { padding: 12px; }
-        .positions-table th, .positions-table td { padding: 8px 6px; font-size: 12px; }
-        .btn-close { padding: 5px 10px; font-size: 10px; }
-    }
-
-    /* Overlay for mobile sidebar */
     .sidebar-overlay {
         display: none;
         position: fixed;
@@ -569,6 +576,12 @@
         backdrop-filter: blur(2px);
     }
     .sidebar-overlay.active { display: block; }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-card); }
+    ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 </style>
 
 <!-- Top Bar -->
@@ -634,7 +647,6 @@
             <a href="/profile/settings" class="sidebar-link">
                 <i class="fas fa-user"></i> Profile
             </a>
-            
             <a href="/logout" class="sidebar-link">
                 <i class="fas fa-sign-out-alt"></i> Logout
             </a>
@@ -644,7 +656,7 @@
 
 <!-- Main Content -->
 <main class="main-content">
-    <!-- Admin Mode Badge (only for admin) -->
+    <!-- Admin Mode Badge -->
     <% if (account && account.userRole === 'admin' && account.tradingMode !== 'normal') { %>
         <div class="admin-badge <%= account.tradingMode %>">
             <i class="fas fa-bolt"></i>
@@ -664,237 +676,142 @@
         </div>
     <% } %>
 
-    <!-- Stats Cards -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-header">
-                <span class="stat-label"><%= account && account.accountType === 'demo' ? 'Demo Balance' : 'Balance' %></span>
-                <i class="fas fa-wallet stat-icon" style="color: var(--accent-green);"></i>
-            </div>
-            <div class="stat-value" style="color: var(--accent-green);">
-                <%= formatCurrency(account && account.balance ? account.balance : 0, account && account.currency ? account.currency : 'USD') %>
-            </div>
-            <div class="stat-sub"><%= account && account.accountType === 'demo' ? 'Virtual Funds' : 'Real Funds' %></div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-header">
-                <span class="stat-label">Equity</span>
-                <i class="fas fa-chart-pie stat-icon" style="color: var(--accent-blue);"></i>
-            </div>
-            <div class="stat-value" style="color: var(--accent-blue);">
-                <%= formatCurrency(account && account.equity ? account.equity : 0, account && account.currency ? account.currency : 'USD') %>
-            </div>
-            <div class="stat-sub <%= account && account.totalOpenPnL >= 0 ? 'positive' : 'negative' %>">
-                <i class="fas fa-<%= account && account.totalOpenPnL >= 0 ? 'arrow-up' : 'arrow-down' %>"></i>
-                <%= account && account.totalOpenPnL >= 0 ? '+' : '' %><%= formatCurrency(account && account.totalOpenPnL ? account.totalOpenPnL : 0, account && account.currency ? account.currency : 'USD') %>
-            </div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-header">
-                <span class="stat-label">Free Margin</span>
-                <i class="fas fa-unlock stat-icon" style="color: var(--accent-purple);"></i>
-            </div>
-            <div class="stat-value" style="color: var(--accent-purple);">
-                <%= formatCurrency(account && account.freeMargin ? account.freeMargin : 0, account && account.currency ? account.currency : 'USD') %>
-            </div>
-            <div class="stat-sub">Available to trade</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-header">
-                <span class="stat-label">Margin Level</span>
-                <i class="fas fa-shield-alt stat-icon" style="color: var(--accent-orange);"></i>
-            </div>
-            <div class="stat-value" style="color: var(--accent-orange);">
-                <%= account && account.marginLevel ? account.marginLevel.toFixed(1) : '0.0' %>
-            </div>
-            <div class="stat-sub <%= account && account.marginLevel > 100 ? 'positive' : 'negative' %>">
-                <i class="fas fa-<%= account && account.marginLevel > 100 ? 'check-circle' : 'exclamation-triangle' %>"></i>
-                <%= account && account.marginLevel > 100 ? 'Safe' : 'Warning' %>
-            </div>
-        </div>
+    <!-- Currency Pairs Ticker Bar -->
+    <div class="pairs-ticker" id="pairsTicker">
+        <% if (pairs && pairs.length > 0) { %>
+            <% pairs.forEach(pair => { %>
+                <div class="ticker-item" onclick="selectPair('<%= pair.id %>', '<%= pair.symbol %>', '<%= pair.name %>', <%= pair.bid %>, <%= pair.ask %>, <%= pair.change_24h || 0 %>)">
+                    <div class="ticker-symbol"><%= pair.symbol %></div>
+                    <div class="ticker-price <%= (pair.change_24h || 0) >= 0 ? 'up' : 'down' %>" id="price-<%= pair.symbol %>">
+                        <%= pair.bid.toFixed(5) %>
+                    </div>
+                </div>
+            <% }) %>
+        <% } else { %>
+            <div style="color: var(--text-muted); font-size: 13px; padding: 8px;">No pairs available</div>
+        <% } %>
     </div>
 
-    <div class="trading-grid">
-        <!-- Left Column -->
-        <div>
-            <!-- Chart -->
-            <div class="chart-card">
-                <div class="chart-header">
-                    <div>
-                        <h3 id="chartPairName">Select a Pair</h3>
-                        <p id="chartPairSymbol">Click a pair below to start trading</p>
-                    </div>
-                    <div class="chart-price">
-                        <div class="chart-price-main" id="chartPrice">0.00000</div>
-                        <div class="chart-price-change" id="chartChange">+0.00%</div>
-                    </div>
+    <!-- Trading Terminal -->
+    <div class="terminal-grid">
+        <!-- Left: Chart -->
+        <div class="chart-section">
+            <div class="chart-header-card">
+                <div class="chart-info">
+                    <h2 id="chartPairName">Select a Pair</h2>
+                    <p id="chartPairSymbol">Click a pair above to start trading</p>
                 </div>
-                <div class="chart-area" id="tradingview_chart"></div>
-            </div>
-
-            <!-- Currency Pairs -->
-            <div class="pairs-card">
-                <h3><i class="fas fa-coins" style="color: var(--accent-purple);"></i> Currency Pairs</h3>
-                <div class="pairs-grid">
-                    <% if (pairs && pairs.length > 0) { %>
-                        <% pairs.forEach(pair => { %>
-                            <div class="pair-card" onclick="selectPair('<%= pair.id %>', '<%= pair.symbol %>', '<%= pair.name %>', <%= pair.bid %>, <%= pair.ask %>, <%= pair.change_24h || 0 %>)">
-                                <div class="pair-header">
-                                    <span class="pair-symbol"><%= pair.symbol %></span>
-                                    <span class="pair-status"></span>
-                                </div>
-                                <div class="pair-prices">
-                                    <div class="price-box">
-                                        <div class="price-label-small">Bid</div>
-                                        <div class="price-value-small bid" id="bid-<%= pair.symbol %>"><%= pair.bid.toFixed(5) %></div>
-                                    </div>
-                                    <div class="price-box">
-                                        <div class="price-label-small">Ask</div>
-                                        <div class="price-value-small ask" id="ask-<%= pair.symbol %>"><%= pair.ask.toFixed(5) %></div>
-                                    </div>
-                                </div>
-                                <div class="pair-spread">Spread: <%= (pair.spread * 10000).toFixed(1) %> pips</div>
-                            </div>
-                        <% }) %>
-                    <% } else { %>
-                        <div class="empty-state" style="grid-column: 1 / -1;">
-                            <i class="fas fa-chart-line"></i>
-                            <p>No currency pairs available</p>
-                        </div>
-                    <% } %>
+                <div class="chart-price-display">
+                    <div class="chart-price-main" id="chartPrice">--</div>
+                    <div class="chart-price-change" id="chartChange">--</div>
                 </div>
             </div>
-
-            <!-- Open Positions -->
-            <% if (openPositions && openPositions.length > 0) { %>
-            <div class="positions-card">
-                <h3><i class="fas fa-list" style="color: var(--accent-blue);"></i> Open Positions (<%= openPositions.length %>)</h3>
-                <div class="table-scroll">
-                    <table class="positions-table">
-                        <thead>
-                            <tr>
-                                <th>Pair</th>
-                                <th>Type</th>
-                                <th>Size</th>
-                                <th>Entry</th>
-                                <th>Current</th>
-                                <th>P&L ($)</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% openPositions.forEach(pos => { %>
-                                <tr>
-                                    <td>
-                                        <div style="font-weight: 700; color: #fff;"><%= pos.pair_symbol %></div>
-                                        <div style="color: var(--text-muted); font-size: 10px;"><%= pos.pair_name %></div>
-                                    </td>
-                                    <td>
-                                        <span class="position-type <%= pos.direction %>"><%= pos.direction %></span>
-                                    </td>
-                                    <td style="font-family: monospace; color: #fff;"><%= pos.lot_size %> lots</td>
-                                    <td style="font-family: monospace; color: #fff;"><%= pos.entry_price.toFixed(5) %></td>
-                                    <td style="font-family: monospace; color: #fff;"><%= pos.current_price ? pos.current_price.toFixed(5) : '-' %></td>
-                                    <td class="position-pnl <%= pos.profit_loss >= 0 ? 'positive' : 'negative' %>">
-                                        <%= pos.profit_loss >= 0 ? '+' : '' %><%= formatCurrency(pos.profit_loss || 0, account && account.currency ? account.currency : 'USD') %>
-                                    </td>
-                                    <td>
-                                        <form action="/trading/close-position/<%= pos.id %>" method="POST" style="display: inline;">
-                                            <button type="submit" class="btn-close"><i class="fas fa-times"></i> Close</button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            <% }) %>
-                        </tbody>
-                    </table>
+            <div class="chart-container" id="tradingview_chart">
+                <div class="empty-trade-state">
+                    <i class="fas fa-chart-area"></i>
+                    <h4>Ready to Trade</h4>
+                    <p>Select a currency pair from the ticker bar above to view the live chart and start trading.</p>
                 </div>
             </div>
-            <% } %>
         </div>
 
-        <!-- Right Column: Trade Panel -->
+        <!-- Right: Trade Panel -->
         <div class="trade-panel">
-            <h3><i class="fas fa-handshake" style="color: var(--accent-purple);"></i> New Order</h3>
-
-            <div class="selected-pair-box">
-                <div class="selected-pair-label">Selected Pair</div>
-                <div class="selected-pair-value" id="selectedPairDisplay">--</div>
+            <div class="trade-panel-header">
+                <h3><i class="fas fa-handshake" style="color: var(--accent-purple);"></i> New Order</h3>
             </div>
 
-            <form action="/trading/open-position" method="POST" id="tradeForm">
-                <input type="hidden" name="pair_id" id="formPairId">
+            <% if (!pairs || pairs.length === 0) { %>
+                <div class="empty-trade-state">
+                    <i class="fas fa-coins"></i>
+                    <h4>No Trading Pairs</h4>
+                    <p>Currency pairs are currently unavailable. Please check back later.</p>
+                </div>
+            <% } else { %>
+                <div class="selected-pair-display">
+                    <div class="label">Selected Pair</div>
+                    <div class="value" id="selectedPairSymbol">--</div>
+                    <div class="sub" id="selectedPairName">Select a pair to trade</div>
+                </div>
 
-                <!-- Direction -->
-                <div class="direction-tabs">
-                    <button type="button" class="direction-tab buy active" onclick="setDirection('buy')">
-                        <i class="fas fa-arrow-up"></i> Buy
+                <form action="/trading/open-position" method="POST" id="tradeForm">
+                    <input type="hidden" name="pair_id" id="formPairId">
+                    <input type="hidden" name="direction" id="directionInput" value="buy">
+
+                    <!-- Direction Buttons -->
+                    <div class="direction-buttons">
+                        <button type="button" class="direction-btn buy active" onclick="setDirection('buy')">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>Buy</span>
+                        </button>
+                        <button type="button" class="direction-btn sell" onclick="setDirection('sell')">
+                            <i class="fas fa-arrow-down"></i>
+                            <span>Sell</span>
+                        </button>
+                    </div>
+
+                    <!-- Trade Amount -->
+                    <div class="form-group">
+                        <label style="display: block; font-size: 10px; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; font-weight: 600;">
+                            <i class="fas fa-dollar-sign"></i> Trade Amount
+                        </label>
+                        <div class="amount-input-group">
+                            <span class="currency-label">$</span>
+                            <input type="number" name="trade_amount" class="amount-input" id="tradeAmount" 
+                                placeholder="Enter amount" step="0.01" min="0.01" oninput="calculateTrade()" required>
+                        </div>
+                        <div class="amount-presets" style="margin-top: 8px;">
+                            <button type="button" class="preset-btn" onclick="setAmount(10)">$10</button>
+                            <button type="button" class="preset-btn" onclick="setAmount(50)">$50</button>
+                            <button type="button" class="preset-btn" onclick="setAmount(100)">$100</button>
+                            <button type="button" class="preset-btn" onclick="setAmount(500)">$500</button>
+                            <button type="button" class="preset-btn" onclick="setAmount(1000)">$1K</button>
+                        </div>
+                    </div>
+
+                    <!-- Leverage -->
+                    <div class="form-group">
+                        <label style="display: block; font-size: 10px; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; font-weight: 600;">
+                            <i class="fas fa-layer-group"></i> Leverage
+                        </label>
+                        <select name="leverage" class="leverage-select" id="leverage" onchange="calculateTrade()">
+                            <option value="1">1:1 (No Leverage)</option>
+                            <option value="10">1:10</option>
+                            <option value="50">1:50</option>
+                            <option value="100" selected>1:100</option>
+                            <option value="200">1:200</option>
+                            <option value="500">1:500</option>
+                        </select>
+                    </div>
+
+                    <!-- Calculations -->
+                    <div class="calc-box">
+                        <div class="calc-row">
+                            <span class="calc-label">Position Size:</span>
+                            <span class="calc-value" id="positionSize">--</span>
+                        </div>
+                        <div class="calc-row">
+                            <span class="calc-label">Margin Required:</span>
+                            <span class="calc-value" id="marginRequired">--</span>
+                        </div>
+                        <div class="calc-row">
+                            <span class="calc-label">Pip Value:</span>
+                            <span class="calc-value" id="pipValue">--</span>
+                        </div>
+                        <div class="calc-row">
+                            <span class="calc-label">Available Balance:</span>
+                            <span class="calc-value highlight" id="availableBalance">
+                                <%= formatCurrency(account && account.balance ? account.balance : 0, account && account.currency ? account.currency : 'USD') %>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Execute Button -->
+                    <button type="submit" class="btn-execute buy" id="submitBtn" disabled>
+                        <i class="fas fa-lock"></i> Select a Pair First
                     </button>
-                    <button type="button" class="direction-tab sell" onclick="setDirection('sell')">
-                        <i class="fas fa-arrow-down"></i> Sell
-                    </button>
-                </div>
-                <input type="hidden" name="direction" id="directionInput" value="buy">
-
-                <!-- Lot Size -->
-                <div class="form-group">
-                    <label class="form-label"><i class="fas fa-coins"></i> Lot Size</label>
-                    <select name="lot_size" class="form-select" id="lotSize" onchange="calculateMargin()">
-                        <option value="0.01">0.01 Micro (1,000 units)</option>
-                        <option value="0.1">0.1 Mini (10,000 units)</option>
-                        <option value="1" selected>1.0 Standard (100,000 units)</option>
-                        <option value="2">2.0 (200,000 units)</option>
-                        <option value="5">5.0 (500,000 units)</option>
-                        <option value="10">10.0 (1,000,000 units)</option>
-                    </select>
-                </div>
-
-                <!-- Leverage -->
-                <div class="form-group">
-                    <label class="form-label"><i class="fas fa-layer-group"></i> Leverage</label>
-                    <select name="leverage" class="form-select" id="leverage" onchange="calculateMargin()">
-                        <option value="50">1:50</option>
-                        <option value="100" selected>1:100</option>
-                        <option value="200">1:200</option>
-                        <option value="500">1:500</option>
-                    </select>
-                </div>
-
-                <!-- Stop Loss -->
-                <div class="form-group">
-                    <label class="form-label"><i class="fas fa-shield-halved"></i> Stop Loss (optional)</label>
-                    <input type="number" name="stop_loss" class="form-input" step="0.00001" placeholder="0.00000">
-                </div>
-
-                <!-- Take Profit -->
-                <div class="form-group">
-                    <label class="form-label"><i class="fas fa-bullseye"></i> Take Profit (optional)</label>
-                    <input type="number" name="take_profit" class="form-input" step="0.00001" placeholder="0.00000">
-                </div>
-
-                <!-- Calculations -->
-                <div class="calculation-box">
-                    <div class="calc-row">
-                        <span class="calc-label">Contract Size:</span>
-                        <span class="calc-value" id="contractSize">100,000</span>
-                    </div>
-                    <div class="calc-row">
-                        <span class="calc-label">Pip Value:</span>
-                        <span class="calc-value" id="pipValue">$10.00</span>
-                    </div>
-                    <div class="calc-row">
-                        <span class="calc-label">Margin Required:</span>
-                        <span class="calc-value" id="marginRequired">$1,000.00</span>
-                    </div>
-                    <div class="calc-row">
-                        <span class="calc-label">Min Trade:</span>
-                        <span class="calc-value" id="minTrade">$10.00</span>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn-submit buy" id="submitBtn" disabled>
-                    <i class="fas fa-lock-open"></i> Open Position
-                </button>
-            </form>
+                </form>
+            <% } %>
         </div>
     </div>
 </main>
@@ -908,6 +825,7 @@
     let selectedPair = null;
     let currentDirection = 'buy';
     let tvWidget = null;
+    const userBalance = <%= account && account.balance ? account.balance : 0 %>;
 
     function toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
@@ -917,13 +835,16 @@
     }
 
     function initChart(symbol) {
+        const container = document.getElementById('tradingview_chart');
+        container.innerHTML = ''; // Clear empty state
+
         if (tvWidget) {
             tvWidget.remove();
         }
 
         tvWidget = new TradingView.widget({
             "width": "100%",
-            "height": 300,
+            "height": "100%",
             "symbol": "FX:" + (symbol || "EURUSD"),
             "interval": "15",
             "timezone": "Etc/UTC",
@@ -942,8 +863,12 @@
     function selectPair(id, symbol, name, bid, ask, change24h) {
         selectedPair = { id, symbol, name, bid, ask };
 
+        // Update form
         document.getElementById('formPairId').value = id;
-        document.getElementById('selectedPairDisplay').textContent = symbol;
+        document.getElementById('selectedPairSymbol').textContent = symbol;
+        document.getElementById('selectedPairName').textContent = name;
+
+        // Update chart header
         document.getElementById('chartPairName').textContent = name;
         document.getElementById('chartPairSymbol').textContent = symbol;
         document.getElementById('chartPrice').textContent = bid.toFixed(5);
@@ -951,67 +876,117 @@
         const changeEl = document.getElementById('chartChange');
         if (change24h >= 0) {
             changeEl.innerHTML = '<i class="fas fa-arrow-up"></i> +' + change24h.toFixed(2) + '%';
-            changeEl.style.color = 'var(--accent-green)';
+            changeEl.className = 'chart-price-change up';
         } else {
             changeEl.innerHTML = '<i class="fas fa-arrow-down"></i> ' + change24h.toFixed(2) + '%';
-            changeEl.style.color = 'var(--accent-red)';
+            changeEl.className = 'chart-price-change down';
         }
 
-        document.getElementById('submitBtn').disabled = false;
+        // Enable submit button
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = false;
+        updateSubmitButton();
 
-        document.querySelectorAll('.pair-card').forEach(c => c.classList.remove('active'));
+        // Highlight active ticker
+        document.querySelectorAll('.ticker-item').forEach(c => c.classList.remove('active'));
         event.currentTarget.classList.add('active');
 
+        // Init chart
         initChart(symbol);
-        calculateMargin();
+        calculateTrade();
     }
 
     function setDirection(dir) {
         currentDirection = dir;
         document.getElementById('directionInput').value = dir;
 
-        document.querySelectorAll('.direction-tab').forEach(t => t.classList.remove('active'));
-        document.querySelector('.direction-tab.' + dir).classList.add('active');
+        document.querySelectorAll('.direction-btn').forEach(t => t.classList.remove('active'));
+        document.querySelector('.direction-btn.' + dir).classList.add('active');
 
-        const btn = document.getElementById('submitBtn');
-        btn.className = 'btn-submit ' + dir;
-        btn.innerHTML = dir === 'buy' 
-            ? '<i class="fas fa-arrow-up"></i> Open BUY Position' 
-            : '<i class="fas fa-arrow-down"></i> Open SELL Position';
+        updateSubmitButton();
     }
 
-    function calculateMargin() {
+    function setAmount(amount) {
+        document.getElementById('tradeAmount').value = amount;
+        calculateTrade();
+    }
+
+    function calculateTrade() {
         if (!selectedPair) return;
 
-        const lotSize = parseFloat(document.getElementById('lotSize').value);
-        const leverage = parseInt(document.getElementById('leverage').value);
-        const contractSize = lotSize * 100000;
-        const marginRequired = contractSize / leverage;
-        const pipValue = lotSize * 10;
+        const amount = parseFloat(document.getElementById('tradeAmount').value) || 0;
+        const leverage = parseInt(document.getElementById('leverage').value) || 1;
 
-        document.getElementById('contractSize').textContent = contractSize.toLocaleString();
-        document.getElementById('pipValue').textContent = '$' + pipValue.toFixed(2);
+        // Calculate position size based on amount and leverage
+        // Amount = margin, Position Size = Amount * Leverage
+        const positionSize = amount * leverage;
+        const marginRequired = amount; // The amount entered is the margin
+        const pipValue = (positionSize / 100000) * 10; // Approximate pip value
+
+        document.getElementById('positionSize').textContent = '$' + positionSize.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
         document.getElementById('marginRequired').textContent = '$' + marginRequired.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('pipValue').textContent = '$' + pipValue.toFixed(2);
 
-        const minEl = document.getElementById('minTrade');
-        if (marginRequired < 10) {
-            minEl.textContent = 'Below $10! Increase size';
-            minEl.className = 'calc-value warning';
+        // Check if user has enough balance
+        const marginEl = document.getElementById('marginRequired');
+        if (amount > userBalance) {
+            marginEl.style.color = 'var(--accent-red)';
         } else {
-            minEl.textContent = '$10.00 ✓';
-            minEl.className = 'calc-value success';
+            marginEl.style.color = '#fff';
         }
+
+        updateSubmitButton();
     }
 
+    function updateSubmitButton() {
+        const btn = document.getElementById('submitBtn');
+        const amount = parseFloat(document.getElementById('tradeAmount').value) || 0;
+
+        if (!selectedPair) {
+            btn.className = 'btn-execute buy';
+            btn.innerHTML = '<i class="fas fa-lock"></i> Select a Pair First';
+            btn.disabled = true;
+            return;
+        }
+
+        if (amount <= 0) {
+            btn.className = 'btn-execute ' + currentDirection;
+            btn.innerHTML = '<i class="fas fa-lock"></i> Enter Amount';
+            btn.disabled = true;
+            return;
+        }
+
+        if (amount > userBalance) {
+            btn.className = 'btn-execute ' + currentDirection;
+            btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Insufficient Balance';
+            btn.disabled = true;
+            return;
+        }
+
+        btn.className = 'btn-execute ' + currentDirection;
+        btn.innerHTML = currentDirection === 'buy'
+            ? '<i class="fas fa-arrow-up"></i> Buy ' + selectedPair.symbol
+            : '<i class="fas fa-arrow-down"></i> Sell ' + selectedPair.symbol;
+        btn.disabled = false;
+    }
+
+    // Socket.io for live price updates
     if (typeof io !== 'undefined') {
         const socket = io();
 
         socket.on('forex_price', (data) => {
-            const bidEl = document.getElementById('bid-' + data.symbol);
-            const askEl = document.getElementById('ask-' + data.symbol);
-
-            if (bidEl) bidEl.textContent = data.bid.toFixed(5);
-            if (askEl) askEl.textContent = data.ask.toFixed(5);
+            const priceEl = document.getElementById('price-' + data.symbol);
+            if (priceEl) {
+                priceEl.textContent = data.bid.toFixed(5);
+                // Flash effect
+                priceEl.style.transition = 'none';
+                priceEl.style.color = data.bid > parseFloat(priceEl.dataset.lastPrice || 0) ? 'var(--accent-green)' : 'var(--accent-red)';
+                priceEl.dataset.lastPrice = data.bid;
+                setTimeout(() => {
+                    priceEl.style.transition = 'color 0.5s';
+                    priceEl.style.color = '';
+                }, 300);
+            }
 
             if (selectedPair && selectedPair.symbol === data.symbol) {
                 document.getElementById('chartPrice').textContent = data.bid.toFixed(5);
@@ -1023,7 +998,22 @@
         });
     }
 
+    // Form validation before submit
+    document.getElementById('tradeForm').addEventListener('submit', function(e) {
+        const amount = parseFloat(document.getElementById('tradeAmount').value) || 0;
+        if (amount <= 0) {
+            e.preventDefault();
+            alert('Please enter a valid trade amount.');
+            return;
+        }
+        if (amount > userBalance) {
+            e.preventDefault();
+            alert('Insufficient balance for this trade.');
+            return;
+        }
+    });
+
     document.addEventListener('DOMContentLoaded', () => {
-        initChart('EURUSD');
+        // No auto-init chart - wait for user to select a pair
     });
 </script>

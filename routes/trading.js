@@ -168,7 +168,7 @@ router.get('/', ensureAuthenticated, async (req, res) => {
             openPositions: parsedPositions || [],
             tradeHistory: tradeHistory || [],
             formatCurrency: formatCurrency,
-            minTradeAmount: 10
+            minTradeAmount: 0.01  // REMOVED: No minimum trade amount
         });
 
     } catch (error) {
@@ -217,7 +217,7 @@ router.get('/positions', ensureAuthenticated, async (req, res) => {
             const lotSize = parseFloat(pos.lot_size) || 0;
             const contractValue = lotSize * 100000;
             const pipSize = pos.pair_symbol.includes('JPY') ? 0.01 : 0.0001;
-            
+
             let pipsProfit, profitLoss;
             if (pos.direction === 'buy') {
                 pipsProfit = (currentPrice - entryPrice) / pipSize;
@@ -278,17 +278,41 @@ router.get('/positions', ensureAuthenticated, async (req, res) => {
     }
 });
 
+// GET /trading/api/prices - Live price feed for positions page polling
+router.get('/api/prices', ensureAuthenticated, async (req, res) => {
+    try {
+        const [pairs] = await db.execute(`
+            SELECT symbol, bid, ask 
+            FROM forex_pairs 
+            WHERE is_active = TRUE
+        `);
+
+        const prices = pairs.map(p => ({
+            symbol: p.symbol,
+            bid: parseFloat(p.bid) || 0,
+            ask: parseFloat(p.ask) || 0
+        }));
+
+        res.json(prices);
+
+    } catch (error) {
+        console.error('Prices API error:', error.message);
+        res.status(500).json({ error: 'Failed to fetch prices' });
+    }
+});
+
 // POST /trading/open-position
 router.post('/open-position', ensureAuthenticated, async (req, res) => {
     const connection = await db.getConnection();
 
     try {
-        const { pair_id, direction, lot_size, leverage, stop_loss, take_profit } = req.body;
+        const { pair_id, direction, trade_amount, leverage } = req.body;
         const userId = req.session.user.id;
 
-        const lotSize = parseFloat(lot_size);
-        if (!lotSize || lotSize < 0.01) {
-            req.flash('error', 'Minimum lot size is 0.01');
+        // NEW: Accept trade_amount instead of lot_size
+        const tradeAmount = parseFloat(trade_amount);
+        if (!tradeAmount || tradeAmount <= 0) {
+            req.flash('error', 'Please enter a valid trade amount greater than 0');
             return res.redirect('/trading');
         }
 
@@ -313,7 +337,6 @@ router.post('/open-position', ensureAuthenticated, async (req, res) => {
 
         const user = users[0];
 
-        // FIXED: Single quotes for 'open'
         const [openPositions] = await connection.execute(
             'SELECT profit_loss FROM forex_trades WHERE user_id = ? AND status = \'open\'',
             [userId]
@@ -329,12 +352,20 @@ router.post('/open-position', ensureAuthenticated, async (req, res) => {
         const usedMargin = parseFloat(user.used_margin) || 0;
         const freeMargin = Math.max(0, effectiveEquity - usedMargin);
 
-        const contractValue = lotSize * 100000;
-        const marginRequired = contractValue / lev;
+        // NEW: Calculate lot_size from trade_amount and leverage
+        // tradeAmount = margin, Position Size = tradeAmount * leverage
+        // lot_size = positionSize / 100000
+        const positionSize = tradeAmount * lev;
+        const lotSize = positionSize / 100000;
+        const marginRequired = tradeAmount; // The amount entered IS the margin
 
-        if (marginRequired < 10) {
+        // REMOVED: No minimum trade amount check
+        // if (marginRequired < 10) { ... }
+
+        // NEW: Check if user has enough balance
+        if (tradeAmount > effectiveBalance) {
             await connection.rollback();
-            req.flash('error', 'Minimum trade size is $10. Increase lot size or reduce leverage.');
+            req.flash('error', `Insufficient balance. Required: $${tradeAmount.toFixed(2)}, Available: $${effectiveBalance.toFixed(2)}`);
             return res.redirect('/trading');
         }
 
@@ -372,8 +403,8 @@ router.post('/open-position', ensureAuthenticated, async (req, res) => {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', NOW(), ?)
         `, [
             userId, pair.id, pair.symbol, direction, entryPrice, entryPrice,
-            lotSize, contractValue, lev, marginRequired,
-            stop_loss || null, take_profit || null,
+            lotSize, positionSize, lev, marginRequired,
+            null, null, // Removed stop_loss/take_profit from form - can be added later
             user.trading_mode !== 'normal' ? user.trading_mode.replace('force_', '') : 'none'
         ]);
 
@@ -391,7 +422,7 @@ router.post('/open-position', ensureAuthenticated, async (req, res) => {
 
         await connection.commit();
 
-        req.flash('success', `${direction.toUpperCase()} position opened: ${lotSize} lots ${pair.symbol} at ${entryPrice}`);
+        req.flash('success', `${direction.toUpperCase()} position opened: $${tradeAmount.toFixed(2)} on ${pair.symbol} at ${entryPrice}`);
         res.redirect('/trading');
 
     } catch (error) {
@@ -413,7 +444,6 @@ router.post('/close-position/:id', ensureAuthenticated, async (req, res) => {
 
         await connection.beginTransaction();
 
-        // FIXED: Single quotes for 'open'
         const [trades] = await connection.execute(
             'SELECT * FROM forex_trades WHERE id = ? AND user_id = ? AND status = \'open\'',
             [tradeId, userId]
@@ -529,7 +559,6 @@ router.post('/positions/:id/close', ensureAuthenticated, async (req, res) => {
 
         await connection.beginTransaction();
 
-        // FIXED: Single quotes for 'open'
         const [trades] = await connection.execute(
             'SELECT * FROM forex_trades WHERE id = ? AND user_id = ? AND status = \'open\'',
             [tradeId, userId]
@@ -649,7 +678,6 @@ router.post('/switch-account', ensureAuthenticated, async (req, res) => {
 
         await connection.beginTransaction();
 
-        // FIXED: Single quotes for 'open'
         const [openPositions] = await connection.execute(
             'SELECT profit_loss, margin_required FROM forex_trades WHERE user_id = ? AND status = \'open\'',
             [userId]

@@ -13,6 +13,8 @@ async function convertAmount(amount, fromCurrency, toCurrency) {
     return parseFloat(amount) * rate;
 }
 
+
+
 router.get('/', ensureAuthenticated, async (req, res) => {
     
     try {

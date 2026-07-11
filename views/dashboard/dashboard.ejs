@@ -1,871 +1,31 @@
+<%
+// ═══════════════════════════════════════════════════════════════════════════════
+// HELPER: Get display name with fallback chain
+// Priority: display_name → username → email → 'User'
+// ═══════════════════════════════════════════════════════════════════════════════
+const displayName = (user && (user.display_name || user.username || user.email)) || 'User';
+const userInitial = displayName.charAt(0).toUpperCase();
+const userCurrency = (user && user.currency) || 'USD';
+%>
+
 <%- include('../partials/head') %>
 <%- include('../partials/navbar') %>
+<link rel="stylesheet" href="../../css/dashboard.css">
 
-<style>
-/* ═══════════════════════════════════════════════════════════════════════════════
-   TRUST-FX DASHBOARD v3.2 — DARK THEME (FIXED)
-   Username visible, balance prominent, mobile-first
-   ═══════════════════════════════════════════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-
-:root {
-  --bg-body: #0b0f19;
-  --bg-sidebar: #111827;
-  --bg-card: #1a1f2e;
-  --bg-hover: #252b3b;
-  --bg-subtle: #151b2b;
-  --bg-input: #1e2535;
-
-  --border: rgba(255, 255, 255, 0.06);
-  --border-light: rgba(255, 255, 255, 0.04);
-  --border-focus: rgba(255, 255, 255, 0.1);
-
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  --text-dim: #475569;
-
-  --green: #22c55e;
-  --green-glow: rgba(34, 197, 94, 0.15);
-  --green-soft: rgba(34, 197, 94, 0.1);
-  --red: #ef4444;
-  --red-glow: rgba(239, 68, 68, 0.15);
-  --red-soft: rgba(239, 68, 68, 0.1);
-  --blue: #3b82f6;
-  --blue-glow: rgba(59, 130, 246, 0.15);
-  --blue-soft: rgba(59, 130, 246, 0.1);
-  --purple: #a855f7;
-  --purple-glow: rgba(168, 85, 247, 0.15);
-  --purple-soft: rgba(168, 85, 247, 0.1);
-  --orange: #f59e0b;
-  --orange-glow: rgba(245, 158, 11, 0.15);
-  --orange-soft: rgba(245, 158, 11, 0.1);
-  --cyan: #06b6d4;
-  --cyan-soft: rgba(6, 182, 212, 0.1);
-  --pink: #ec4899;
-  --pink-soft: rgba(236, 72, 153, 0.1);
-
-  --radius-sm: 10px;
-  --radius-md: 14px;
-  --radius-lg: 18px;
-  --radius-xl: 24px;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
-
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-mono: 'SF Mono', 'Fira Code', 'Courier New', monospace;
-
-  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-html { font-size: 14px; -webkit-font-smoothing: antialiased; }
-body { font-family: var(--font-sans); background: var(--bg-body); color: var(--text-primary); min-height: 100vh; line-height: 1.5; }
-
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--bg-hover); border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
-
-/* ─── ANIMATIONS ─── */
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-@keyframes slideInRight {
-  from { opacity: 0; transform: translateX(20px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(1.3); }
-}
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
-}
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-.animate-fadeInUp { animation: fadeInUp 0.6s var(--transition-slow) forwards; opacity: 0; }
-.animate-fadeIn { animation: fadeIn 0.5s var(--transition-slow) forwards; opacity: 0; }
-.animate-slideIn { animation: slideInRight 0.5s var(--transition-slow) forwards; opacity: 0; }
-
-/* ─── LAYOUT ─── */
-.dashboard-wrapper { min-height: 100vh; }
-.dashboard-container { max-width: 1440px; margin: 0 auto; padding: 24px 32px; }
-
-/* ═══════════════════════════════════════════════════════════════════════════════
-   USER PROFILE HEADER — PROMINENT NAME DISPLAY
-   ═══════════════════════════════════════════════════════════════════════════════ */
-
-.user-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.user-profile {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.user-avatar {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--purple), #7c3aed);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  font-weight: 700;
-  color: white;
-  flex-shrink: 0;
-  box-shadow: 0 4px 16px var(--purple-glow);
-  border: 2px solid rgba(168, 85, 247, 0.3);
-}
-
-.user-info { display: flex; flex-direction: column; gap: 4px; }
-.user-greeting { font-size: 13px; color: var(--text-muted); font-weight: 500; }
-.user-name { 
-  font-size: 26px; 
-  font-weight: 800; 
-  color: var(--text-primary);
-  letter-spacing: -0.3px;
-}
-.user-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 4px 12px;
-  border-radius: 20px;
-  width: fit-content;
-}
-.user-status.verified {
-  background: var(--green-soft);
-  color: var(--green);
-  border: 1px solid rgba(34, 197, 94, 0.2);
-}
-.user-status.pending {
-  background: var(--orange-soft);
-  color: var(--orange);
-  border: 1px solid rgba(245, 158, 11, 0.2);
-}
-
-.user-actions { display: flex; align-items: center; gap: 10px; }
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 22px;
-  border-radius: var(--radius-md);
-  font-size: 14px;
-  font-weight: 600;
-  text-decoration: none;
-  border: none;
-  cursor: pointer;
-  transition: var(--transition);
-  touch-action: manipulation;
-  min-height: 44px;
-}
-.btn-primary {
-  background: linear-gradient(135deg, var(--green), #16a34a);
-  color: white;
-  box-shadow: 0 4px 14px var(--green-glow);
-}
-.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px var(--green-glow); }
-.btn-ghost {
-  background: var(--bg-card);
-  color: var(--text-secondary);
-  border: 1px solid var(--border);
-}
-.btn-ghost:hover { background: var(--bg-hover); border-color: var(--border-focus); color: var(--text-primary); }
-
-/* ═══════════════════════════════════════════════════════════════════════════════
-   BALANCE HERO — MOBILE-FIRST PROMINENT DISPLAY
-   ═══════════════════════════════════════════════════════════════════════════════ */
-
-.balance-hero {
-  background: linear-gradient(135deg, rgba(168, 85, 247, 0.08) 0%, rgba(59, 130, 246, 0.05) 50%, rgba(6, 182, 212, 0.03) 100%);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xl);
-  padding: 32px;
-  margin-bottom: 28px;
-  position: relative;
-  overflow: hidden;
-  backdrop-filter: blur(10px);
-}
-.balance-hero::before {
-  content: '';
-  position: absolute;
-  top: -50%; right: -10%;
-  width: 300px; height: 300px;
-  background: radial-gradient(circle, var(--purple-glow) 0%, transparent 70%);
-  opacity: 0.4;
-}
-.balance-hero::after {
-  content: '';
-  position: absolute;
-  bottom: -30%; left: -5%;
-  width: 200px; height: 200px;
-  background: radial-gradient(circle, var(--green-glow) 0%, transparent 70%);
-  opacity: 0.2;
-}
-
-.balance-hero-inner { position: relative; z-index: 1; }
-.balance-hero-label {
-  font-size: 13px;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  font-weight: 600;
-  margin-bottom: 10px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.balance-hero-label i { color: var(--green); font-size: 12px; }
-.balance-hero-amount {
-  font-size: 48px;
-  font-weight: 800;
-  font-family: var(--font-mono);
-  color: var(--text-primary);
-  letter-spacing: -1.5px;
-  line-height: 1.1;
-  margin-bottom: 8px;
-  text-shadow: 0 0 40px rgba(168, 85, 247, 0.2);
-}
-.balance-hero-currency {
-  font-size: 14px;
-  color: var(--text-muted);
-  margin-bottom: 24px;
-}
-.balance-hero-actions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-.balance-hero-actions .btn { min-height: 48px; padding: 14px 28px; }
-
-/* ─── ALERTS ─── */
-.alert-banner {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  padding: 18px 22px;
-  border-radius: var(--radius-lg);
-  margin-bottom: 16px;
-  border: 1px solid;
-  position: relative;
-  animation: slideInRight 0.4s var(--transition-slow) forwards;
-  opacity: 0;
-}
-.alert-banner.warning { background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(245,158,11,0.02)); border-color: rgba(245,158,11,0.2); }
-.alert-banner.error { background: linear-gradient(135deg, rgba(239,68,68,0.08), rgba(239,68,68,0.02)); border-color: rgba(239,68,68,0.2); }
-.alert-banner.success { background: linear-gradient(135deg, rgba(34,197,94,0.08), rgba(34,197,94,0.02)); border-color: rgba(34,197,94,0.2); }
-.alert-banner.info { background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(59,130,246,0.02)); border-color: rgba(59,130,246,0.2); }
-
-.alert-banner-icon {
-  width: 40px; height: 40px;
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  flex-shrink: 0;
-}
-.alert-banner.warning .alert-banner-icon { background: rgba(245,158,11,0.1); color: var(--orange); }
-.alert-banner.error .alert-banner-icon { background: rgba(239,68,68,0.1); color: var(--red); }
-.alert-banner.success .alert-banner-icon { background: rgba(34,197,94,0.1); color: var(--green); }
-.alert-banner.info .alert-banner-icon { background: rgba(59,130,246,0.1); color: var(--blue); }
-
-.alert-banner-body { flex: 1; }
-.alert-banner-title { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
-.alert-banner.warning .alert-banner-title { color: var(--orange); }
-.alert-banner.error .alert-banner-title { color: var(--red); }
-.alert-banner.success .alert-banner-title { color: var(--green); }
-.alert-banner.info .alert-banner-title { color: var(--blue); }
-.alert-banner-text { font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 12px; }
-.alert-banner-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-.alert-banner-btn {
-  padding: 8px 16px;
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  font-weight: 600;
-  text-decoration: none;
-  border: none;
-  cursor: pointer;
-  transition: var(--transition);
-}
-.alert-banner-btn.primary { background: linear-gradient(135deg, var(--purple), #7c3aed); color: white; }
-.alert-banner-btn.primary:hover { box-shadow: 0 4px 12px var(--purple-glow); }
-.alert-banner-btn.ghost { background: rgba(255,255,255,0.05); color: var(--text-muted); border: 1px solid var(--border); }
-.alert-banner-btn.ghost:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
-.alert-banner-close {
-  position: absolute;
-  top: 14px; right: 14px;
-  width: 30px; height: 30px;
-  border: none;
-  background: rgba(255,255,255,0.05);
-  color: var(--text-muted);
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: var(--transition);
-}
-.alert-banner-close:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
-
-/* ─── STATS ROW ─── */
-.stats-row {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 18px;
-  margin-bottom: 28px;
-}
-.stat-box {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 22px;
-  position: relative;
-  overflow: hidden;
-  transition: var(--transition-slow);
-}
-.stat-box:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-md);
-}
-.stat-box::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-}
-.stat-box.purple::before { background: linear-gradient(90deg, var(--purple), transparent); }
-.stat-box.green::before { background: linear-gradient(90deg, var(--green), transparent); }
-.stat-box.blue::before { background: linear-gradient(90deg, var(--blue), transparent); }
-.stat-box.orange::before { background: linear-gradient(90deg, var(--orange), transparent); }
-
-.stat-box-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 14px;
-}
-.stat-box-label { 
-  font-size: 11px; 
-  color: var(--text-muted); 
-  font-weight: 600; 
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-}
-.stat-box-icon {
-  width: 40px; height: 40px;
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-}
-.stat-box-icon.purple { background: var(--purple-soft); color: var(--purple); }
-.stat-box-icon.green { background: var(--green-soft); color: var(--green); }
-.stat-box-icon.blue { background: var(--blue-soft); color: var(--blue); }
-.stat-box-icon.orange { background: var(--orange-soft); color: var(--orange); }
-
-.stat-box-value { 
-  font-size: 24px; 
-  font-weight: 800; 
-  font-family: var(--font-mono); 
-  color: var(--text-primary); 
-  letter-spacing: -0.5px;
-  margin-bottom: 8px;
-}
-.stat-box-value.positive { color: var(--green); }
-.stat-box-value.negative { color: var(--red); }
-.stat-box-sub { 
-  font-size: 12px; 
-  color: var(--text-muted); 
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.stat-box-change {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 6px;
-}
-.stat-box-change.up { background: var(--green-soft); color: var(--green); }
-.stat-box-change.down { background: var(--red-soft); color: var(--red); }
-
-/* ─── MAIN GRID ─── */
-.main-grid {
-  display: grid;
-  grid-template-columns: 1fr 360px;
-  gap: 24px;
-  margin-bottom: 24px;
-}
-
-/* ─── CARD ─── */
-.card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  transition: var(--transition);
-}
-.card:hover { border-color: var(--border-focus); box-shadow: var(--shadow-md); }
-.card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--border-light);
-  flex-wrap: wrap;
-  gap: 12px;
-}
-.card-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.card-title i { color: var(--purple); font-size: 16px; }
-.card-body { padding: 20px 24px; }
-
-/* ─── CHART AREA ─── */
-.chart-area { padding: 24px; }
-.chart-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-.chart-value-group { display: flex; flex-direction: column; gap: 4px; }
-.chart-main-value { font-size: 32px; font-weight: 800; font-family: var(--font-mono); color: var(--text-primary); }
-.chart-sub-value { 
-  font-size: 13px; 
-  color: var(--text-muted); 
-  display: flex; 
-  align-items: center; 
-  gap: 8px; 
-}
-.chart-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-}
-.chart-badge.up { background: var(--green-soft); color: var(--green); }
-.chart-badge.down { background: var(--red-soft); color: var(--red); }
-
-.chart-tabs {
-  display: flex;
-  gap: 4px;
-  background: var(--bg-subtle);
-  padding: 4px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border);
-}
-.chart-tab {
-  padding: 6px 14px;
-  border-radius: var(--radius-sm);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-muted);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: var(--transition);
-}
-.chart-tab:hover { color: var(--text-secondary); }
-.chart-tab.active { 
-  background: var(--bg-card); 
-  color: var(--text-primary); 
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border);
-}
-
-.chart-visual {
-  height: 240px;
-  background: linear-gradient(180deg, var(--green-soft) 0%, transparent 60%);
-  border-radius: var(--radius-md);
-  position: relative;
-  overflow: hidden;
-}
-.chart-visual::before {
-  content: '';
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--green), transparent);
-  opacity: 0.3;
-}
-.chart-line {
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 100%;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 240' preserveAspectRatio='none'%3E%3Cpath d='M0,200 Q100,180 200,160 T400,120 T600,140 T800,80' fill='none' stroke='%2322c55e' stroke-width='2.5' opacity='0.7'/%3E%3Cpath d='M0,200 Q100,180 200,160 T400,120 T600,140 T800,80 L800,240 L0,240 Z' fill='url(%23grad)' opacity='0.15'/%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='0%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%2322c55e;stop-opacity:0.3' /%3E%3Cstop offset='100%25' style='stop-color:%2322c55e;stop-opacity:0' /%3E%3C/linearGradient%3E%3C/defs%3E%3C/svg%3E");
-  background-size: cover;
-}
-
-/* ─── POSITIONS ─── */
-.positions-list { display: flex; flex-direction: column; gap: 8px; }
-.position-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px;
-  background: var(--bg-subtle);
-  border-radius: var(--radius-md);
-  border: 1px solid transparent;
-  transition: var(--transition);
-  flex-wrap: wrap;
-  gap: 12px;
-}
-.position-item:hover { background: var(--bg-hover); border-color: var(--border); }
-.position-info { display: flex; align-items: center; gap: 14px; }
-.position-pair { display: flex; flex-direction: column; gap: 2px; }
-.position-symbol { font-weight: 700; font-size: 14px; color: var(--text-primary); }
-.position-name { font-size: 11px; color: var(--text-muted); }
-.position-tag {
-  padding: 4px 12px;
-  border-radius: 6px;
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-.position-tag.buy { background: var(--green-soft); color: var(--green); }
-.position-tag.sell { background: var(--red-soft); color: var(--red); }
-.position-metrics { display: flex; gap: 28px; flex-wrap: wrap; }
-.position-metric { text-align: center; }
-.position-metric-label { 
-  font-size: 10px; 
-  color: var(--text-muted); 
-  text-transform: uppercase; 
-  letter-spacing: 0.8px; 
-  margin-bottom: 4px;
-}
-.position-metric-value { 
-  font-family: var(--font-mono); 
-  font-weight: 600; 
-  font-size: 13px; 
-  color: var(--text-primary); 
-}
-.position-pnl { 
-  font-family: var(--font-mono); 
-  font-weight: 700; 
-  font-size: 18px; 
-}
-.position-pnl.positive { color: var(--green); }
-.position-pnl.negative { color: var(--red); }
-
-/* ─── ACTIVITY ─── */
-.activity-list { display: flex; flex-direction: column; }
-.activity-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 0;
-  border-bottom: 1px solid var(--border-light);
-  transition: var(--transition);
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.activity-item:last-child { border-bottom: none; }
-.activity-item:hover { padding-left: 8px; }
-.activity-info { display: flex; flex-direction: column; gap: 3px; }
-.activity-title { 
-  font-weight: 600; 
-  font-size: 13px; 
-  color: var(--text-primary); 
-  display: flex; 
-  align-items: center; 
-  gap: 8px; 
-}
-.activity-meta { font-size: 12px; color: var(--text-muted); }
-.activity-value { 
-  font-family: var(--font-mono); 
-  font-weight: 700; 
-  font-size: 15px; 
-}
-.activity-value.positive { color: var(--green); }
-.activity-value.negative { color: var(--red); }
-
-.pl-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-size: 10px;
-  font-weight: 700;
-}
-.pl-badge.positive { background: var(--green-soft); color: var(--green); }
-.pl-badge.negative { background: var(--red-soft); color: var(--red); }
-
-/* ─── WIDGETS ─── */
-.widget-list { display: flex; flex-direction: column; gap: 10px; }
-.widget-item {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 16px;
-  background: var(--bg-subtle);
-  border-radius: var(--radius-md);
-  border: 1px solid transparent;
-  transition: var(--transition);
-  text-decoration: none;
-  color: inherit;
-  cursor: pointer;
-}
-.widget-item:hover { background: var(--bg-hover); border-color: var(--border); }
-.widget-icon {
-  width: 42px; height: 42px;
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 17px;
-  flex-shrink: 0;
-  transition: var(--transition);
-}
-.widget-item:hover .widget-icon { transform: scale(1.1); }
-.widget-icon.purple { background: var(--purple-soft); color: var(--purple); }
-.widget-icon.green { background: var(--green-soft); color: var(--green); }
-.widget-icon.blue { background: var(--blue-soft); color: var(--blue); }
-.widget-icon.pink { background: var(--pink-soft); color: var(--pink); }
-.widget-icon.orange { background: var(--orange-soft); color: var(--orange); }
-.widget-icon.cyan { background: var(--cyan-soft); color: var(--cyan); }
-.widget-icon.red { background: var(--red-soft); color: var(--red); }
-
-.widget-content { flex: 1; min-width: 0; }
-.widget-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
-.widget-desc { font-size: 12px; color: var(--text-muted); }
-.widget-badge {
-  background: var(--red);
-  color: white;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 10px;
-  min-width: 20px;
-  text-align: center;
-}
-
-/* ─── EMPTY STATE ─── */
-.empty-state { text-align: center; padding: 48px 20px; }
-.empty-state i { font-size: 44px; color: var(--text-dim); margin-bottom: 16px; display: block; opacity: 0.4; }
-.empty-state p { color: var(--text-muted); font-size: 14px; margin-bottom: 16px; }
-.empty-state a { color: var(--purple); text-decoration: none; font-weight: 600; font-size: 14px; }
-.empty-state a:hover { text-decoration: underline; }
-
-/* ─── BTC TICKER ─── */
-.ticker-widget {
-  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%);
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  color: white;
-  position: relative;
-  overflow: hidden;
-  margin-bottom: 20px;
-  border: 1px solid rgba(139, 92, 246, 0.2);
-}
-.ticker-widget::before {
-  content: '';
-  position: absolute;
-  top: -50%; right: -10%;
-  width: 250px; height: 250px;
-  background: radial-gradient(circle, var(--purple-glow) 0%, transparent 70%);
-}
-.ticker-widget::after {
-  content: '';
-  position: absolute;
-  bottom: -30%; left: -10%;
-  width: 160px; height: 160px;
-  background: radial-gradient(circle, var(--green-glow) 0%, transparent 70%);
-  opacity: 0.3;
-}
-.ticker-widget-header { 
-  display: flex; 
-  align-items: center; 
-  gap: 12px; 
-  margin-bottom: 16px; 
-  position: relative; 
-  z-index: 1; 
-}
-.ticker-widget-icon { 
-  width: 40px; height: 40px; 
-  background: linear-gradient(135deg, #f7931a, #f59e0b); 
-  border-radius: 50%; 
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  font-size: 20px;
-  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);
-  animation: float 3s ease-in-out infinite;
-}
-.ticker-widget-name { font-weight: 700; font-size: 15px; }
-.ticker-widget-live {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: #86efac;
-  margin-left: auto;
-}
-.ticker-widget-live-dot { 
-  width: 7px; height: 7px; 
-  background: #22c55e; 
-  border-radius: 50%; 
-  animation: pulse-dot 2s infinite; 
-}
-.ticker-widget-price { 
-  font-size: 30px; 
-  font-weight: 800; 
-  font-family: var(--font-mono); 
-  position: relative; 
-  z-index: 1;
-  text-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
-}
-.ticker-widget-change { 
-  font-size: 14px; 
-  font-weight: 600; 
-  margin-top: 6px; 
-  position: relative; 
-  z-index: 1; 
-}
-.ticker-widget-change.up { color: #86efac; }
-.ticker-widget-change.down { color: #fca5a5; }
-
-/* ─── REVEAL ─── */
-.reveal {
-  opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 0.6s var(--transition-slow), transform 0.6s var(--transition-slow);
-}
-.reveal.visible { opacity: 1; transform: translateY(0); }
-
-/* ═══════════════════════════════════════════════════════════════════════════════
-   RESPONSIVE — MOBILE FIRST
-   ═══════════════════════════════════════════════════════════════════════════════ */
-
-@media (max-width: 1200px) {
-  .main-grid { grid-template-columns: 1fr 320px; }
-}
-
-@media (max-width: 1024px) {
-  .stats-row { grid-template-columns: repeat(2, 1fr); }
-  .main-grid { grid-template-columns: 1fr; }
-}
-
-/* MOBILE BREAKPOINT */
-@media (max-width: 768px) {
-  .dashboard-container { padding: 16px; }
-
-  /* User Header Mobile */
-  .user-header { flex-direction: column; align-items: flex-start; gap: 12px; }
-  .user-avatar { width: 48px; height: 48px; font-size: 18px; }
-  .user-name { font-size: 22px; }
-  .user-actions { width: 100%; }
-  .user-actions .btn { flex: 1; justify-content: center; }
-
-  /* Balance Hero Mobile — PROMINENT */
-  .balance-hero { padding: 24px 20px; margin-bottom: 20px; }
-  .balance-hero-amount { font-size: 36px; }
-  .balance-hero-actions { flex-direction: column; }
-  .balance-hero-actions .btn { width: 100%; justify-content: center; }
-
-  .stats-row { grid-template-columns: 1fr; gap: 12px; margin-bottom: 20px; }
-  .stat-box { padding: 18px; }
-  .stat-box-value { font-size: 22px; }
-
-  .main-grid { gap: 16px; }
-  .card-header { padding: 16px 20px; }
-  .card-body { padding: 16px 20px; }
-  .chart-main-value { font-size: 26px; }
-  .chart-visual { height: 180px; }
-  .position-item { padding: 14px; }
-  .position-metrics { width: 100%; justify-content: space-between; }
-
-  .ticker-widget { padding: 20px; }
-  .ticker-widget-price { font-size: 26px; }
-
-  .alert-banner { padding: 16px 18px; flex-direction: column; gap: 12px; }
-  .alert-banner-actions { width: 100%; }
-  .alert-banner-btn { flex: 1; justify-content: center; }
-}
-
-/* SMALL MOBILE */
-@media (max-width: 480px) {
-  .user-name { font-size: 20px; }
-  .balance-hero-amount { font-size: 32px; }
-  .stat-box { padding: 16px; }
-  .stat-box-value { font-size: 20px; }
-  .chart-main-value { font-size: 22px; }
-  .position-item { flex-direction: column; align-items: flex-start; }
-  .position-pnl { align-self: flex-end; }
-  .widget-item { padding: 12px; }
-}
-
-/* LANDSCAPE */
-@media (max-height: 500px) and (orientation: landscape) {
-  .dashboard-wrapper { padding-bottom: 16px; }
-}
-
-/* REDUCED MOTION */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
-}
-</style>
 
 <div class="dashboard-wrapper">
   <div class="dashboard-container">
 
-    <!-- ═══════════════════════════════════════════════════════════════════════
-         USER PROFILE HEADER — Name prominently displayed with avatar
-         ═══════════════════════════════════════════════════════════════════════ -->
     <header class="user-header animate-fadeInUp">
       <div class="user-profile">
         <div class="user-avatar">
-          <%= user.username ? user.username.charAt(0).toUpperCase() : 'U' %>
+          <%= userInitial %>
         </div>
         <div class="user-info">
           <span class="user-greeting">Good to see you,</span>
-          <h1 class="user-name"><%= user.username || 'User' %></h1>
-          <% if (user.account_verified) { %>
+          <h1 class="user-name"><%= displayName %></h1>
+          <% if (user && user.account_verified) { %>
             <span class="user-status verified">
               <i class="fas fa-shield-check"></i> Verified Account
             </span>
@@ -876,27 +36,19 @@ body { font-family: var(--font-sans); background: var(--bg-body); color: var(--t
           <% } %>
         </div>
       </div>
-      <div class="user-actions">
-        <a href="/investments" class="btn btn-primary">
-          <i class="fas fa-plus"></i> Invest
-        </a>
-        <a href="/transactions/withdraw/verify" class="btn btn-ghost">
-          <i class="fas fa-arrow-up"></i> Withdraw
-        </a>
-      </div>
+      <!-- REMOVED: duplicate .user-actions Invest/Withdraw buttons.
+           Invest Now / Withdraw already exist below in .balance-hero-actions,
+           so there is now only ONE of each button on the page. -->
     </header>
 
-    <!-- ═══════════════════════════════════════════════════════════════════════
-         BALANCE HERO — Big, prominent balance display (first thing on mobile)
-         ═══════════════════════════════════════════════════════════════════════ -->
     <section class="balance-hero animate-fadeInUp" style="animation-delay: 0.1s;">
       <div class="balance-hero-inner">
         <div class="balance-hero-label">
           <i class="fas fa-wallet"></i> Available Balance
         </div>
-        <div class="balance-hero-amount"><%= balanceFormatted || '$0.00' %></div>
+        <div class="balance-hero-amount"><%= userCurrency + ' ' + (balanceFormatted || '0.00') %></div>
         <div class="balance-hero-currency">
-          Currency: <%= user.currency || 'USD' %>
+          Currency: <%= userCurrency %>
         </div>
         <div class="balance-hero-actions">
           <a href="/investments" class="btn btn-primary">
@@ -909,7 +61,6 @@ body { font-family: var(--font-sans); background: var(--bg-body); color: var(--t
       </div>
     </section>
 
-    <!-- ═══ ALERTS ═══ -->
     <% if (typeof warnings !== 'undefined' && warnings && warnings.length > 0) { %>
       <% warnings.forEach((warning, index) => { 
         let alertType, iconSymbol;
@@ -937,20 +88,18 @@ body { font-family: var(--font-sans); background: var(--bg-body); color: var(--t
       <% }) %>
     <% } %>
 
-    <!-- ═══ STATS ROW ═══ -->
     <section class="stats-row reveal">
-      <!-- Portfolio Value -->
       <div class="stat-box purple">
         <div class="stat-box-header">
           <span class="stat-box-label">Portfolio Value</span>
           <div class="stat-box-icon purple"><i class="fas fa-chart-pie"></i></div>
         </div>
-        <div class="stat-box-value"><%= totalValueFormatted || '$0.00' %></div>
+        <div class="stat-box-value"><%= userCurrency + ' ' + (totalValueFormatted || '0.00') %></div>
         <% if (typeof tradeStats !== 'undefined' && tradeStats.winRate > 0) { %>
           <div class="stat-box-sub">
-            <span class="stat-box-change <%= parseFloat((unrealizedPnLFormatted || '$0').replace(/[^0-9.-]/g, '')) >= 0 ? 'up' : 'down' %>">
-              <i class="fas fa-arrow-<%= parseFloat((unrealizedPnLFormatted || '$0').replace(/[^0-9.-]/g, '')) >= 0 ? 'up' : 'down' %>"></i>
-              Unrealized <%= unrealizedPnLFormatted || '$0.00' %>
+            <span class="stat-box-change <%= parseFloat((unrealizedPnLFormatted || '0').replace(/[^0-9.-]/g, '')) >= 0 ? 'up' : 'down' %>">
+              <i class="fas fa-arrow-<%= parseFloat((unrealizedPnLFormatted || '0').replace(/[^0-9.-]/g, '')) >= 0 ? 'up' : 'down' %>"></i>
+              Unrealized <%= userCurrency + ' ' + (unrealizedPnLFormatted || '0.00') %>
             </span>
           </div>
         <% } else { %>
@@ -958,24 +107,22 @@ body { font-family: var(--font-sans); background: var(--bg-body); color: var(--t
         <% } %>
       </div>
 
-      <!-- Active Investments -->
       <div class="stat-box green">
         <div class="stat-box-header">
           <span class="stat-box-label">Active Investments</span>
           <div class="stat-box-icon green"><i class="fas fa-chart-line"></i></div>
         </div>
-        <div class="stat-box-value"><%= activeInvestmentFormatted || '$0.00' %></div>
+        <div class="stat-box-value"><%= userCurrency + ' ' + (activeInvestmentFormatted || '0.00') %></div>
         <div class="stat-box-sub"><%= (typeof tradeStats !== 'undefined' ? tradeStats.openPositions : 0) %> open trades</div>
       </div>
 
-      <!-- Total P&L -->
       <div class="stat-box blue">
         <div class="stat-box-header">
           <span class="stat-box-label">Total Profit/Loss</span>
           <div class="stat-box-icon blue"><i class="fas fa-wallet"></i></div>
         </div>
-        <div class="stat-box-value <%= parseFloat((totalPnLFormatted || '$0').replace(/[^0-9.-]/g, '')) >= 0 ? 'positive' : 'negative' %>">
-          <%= parseFloat((totalPnLFormatted || '$0').replace(/[^0-9.-]/g, '')) >= 0 ? '+' : '' %><%= totalPnLFormatted || '$0.00' %>
+        <div class="stat-box-value <%= parseFloat((totalPnLFormatted || '0').replace(/[^0-9.-]/g, '')) >= 0 ? 'positive' : 'negative' %>">
+          <%= parseFloat((totalPnLFormatted || '0').replace(/[^0-9.-]/g, '')) >= 0 ? '+' : '' %><%= userCurrency + ' ' + (totalPnLFormatted || '0.00') %>
         </div>
         <div class="stat-box-sub">
           <%= (typeof tradeStats !== 'undefined' ? tradeStats.winningTrades : 0) %>W / <%= (typeof tradeStats !== 'undefined' ? tradeStats.losingTrades : 0) %>L 
@@ -983,35 +130,29 @@ body { font-family: var(--font-sans); background: var(--bg-body); color: var(--t
         </div>
       </div>
 
-      <!-- Total Deposits -->
       <div class="stat-box orange">
         <div class="stat-box-header">
           <span class="stat-box-label">Total Deposits</span>
           <div class="stat-box-icon orange"><i class="fas fa-arrow-down"></i></div>
         </div>
         <div class="stat-box-value" style="color: var(--green);">
-          <%= typeof totalDepositsFormatted !== 'undefined' ? totalDepositsFormatted : '$0.00' %>
+          <%= userCurrency + ' ' + (typeof totalDepositsFormatted !== 'undefined' ? totalDepositsFormatted : '0.00') %>
         </div>
         <div class="stat-box-sub"><%= typeof totalDepositsCount !== 'undefined' ? totalDepositsCount : 0 %> deposits</div>
       </div>
     </section>
 
-    <!-- ═══ MAIN GRID ═══ -->
     <div class="main-grid">
-
-      <!-- LEFT COLUMN -->
       <div class="main-left">
-
-        <!-- Chart Card -->
         <div class="card reveal">
           <div class="chart-area">
             <div class="chart-header">
               <div class="chart-value-group">
-                <div class="chart-main-value"><%= balanceFormatted || '$0.00' %></div>
+                <div class="chart-main-value"><%= userCurrency + ' ' + (balanceFormatted || '0.00') %></div>
                 <div class="chart-sub-value">
-                  Balance Overview &bull; <%= user.currency || 'USD' %>
-                  <span class="chart-badge <%= parseFloat((totalPnLFormatted || '$0').replace(/[^0-9.-]/g, '')) >= 0 ? 'up' : 'down' %>">
-                    <i class="fas fa-arrow-<%= parseFloat((totalPnLFormatted || '$0').replace(/[^0-9.-]/g, '')) >= 0 ? 'up' : 'down' %>"></i>
+                  Balance Overview &bull; <%= userCurrency %>
+                  <span class="chart-badge <%= parseFloat((totalPnLFormatted || '0').replace(/[^0-9.-]/g, '')) >= 0 ? 'up' : 'down' %>">
+                    <i class="fas fa-arrow-<%= parseFloat((totalPnLFormatted || '0').replace(/[^0-9.-]/g, '')) >= 0 ? 'up' : 'down' %>"></i>
                     <%= (typeof tradeStats !== 'undefined' ? tradeStats.winRate : 0) %>% win rate
                   </span>
                 </div>
@@ -1029,7 +170,6 @@ body { font-family: var(--font-sans); background: var(--bg-body); color: var(--t
           </div>
         </div>
 
-        <!-- Active Positions -->
         <% if (typeof activeInvestments !== 'undefined' && activeInvestments && activeInvestments.length > 0) { %>
         <div class="card reveal" style="margin-top: 20px;">
           <div class="card-header">
@@ -1070,7 +210,6 @@ body { font-family: var(--font-sans); background: var(--bg-body); color: var(--t
         </div>
         <% } %>
 
-        <!-- Recent Activity -->
         <% if (typeof recentTrades !== 'undefined' && recentTrades && recentTrades.length > 0) { %>
         <div class="card reveal" style="margin-top: 20px;">
           <div class="card-header">
@@ -1084,7 +223,7 @@ body { font-family: var(--font-sans); background: var(--bg-body); color: var(--t
                   <div class="activity-title">
                     <%= (trade.direction || 'buy').toUpperCase() %> <%= trade.pair_symbol || 'N/A' %>
                     <span class="pl-badge <%= (trade.profit_loss || 0) > 0 ? 'positive' : 'negative' %>">
-                      <%= (trade.profit_loss || 0) > 0 ? '+' : '' %>$<%= parseFloat(trade.profit_loss || 0).toFixed(2) %>
+                      <%= (trade.profit_loss || 0) > 0 ? '+' : '' %><%= userCurrency + ' ' + parseFloat(trade.profit_loss || 0).toFixed(2) %>
                     </span>
                   </div>
                   <div class="activity-meta">
@@ -1093,7 +232,7 @@ body { font-family: var(--font-sans); background: var(--bg-body); color: var(--t
                   </div>
                 </div>
                 <div class="activity-value <%= (trade.profit_loss || 0) > 0 ? 'positive' : 'negative' %>">
-                  <%= (trade.profit_loss || 0) > 0 ? '+' : '' %>$<%= Math.abs(parseFloat(trade.profit_loss || 0)).toFixed(2) %>
+                  <%= (trade.profit_loss || 0) > 0 ? '+' : '' %><%= userCurrency + ' ' + Math.abs(parseFloat(trade.profit_loss || 0)).toFixed(2) %>
                 </div>
               </div>
               <% }) %>
@@ -1111,13 +250,9 @@ body { font-family: var(--font-sans); background: var(--bg-body); color: var(--t
           </div>
         </div>
         <% } %>
-
       </div>
 
-      <!-- RIGHT COLUMN -->
       <div class="main-right">
-
-        <!-- BTC Ticker -->
         <div class="ticker-widget reveal">
           <div class="ticker-widget-header">
             <div class="ticker-widget-icon"><i class="fab fa-bitcoin"></i></div>
@@ -1128,7 +263,6 @@ body { font-family: var(--font-sans); background: var(--bg-body); color: var(--t
           <div class="ticker-widget-change up" id="btcChange"><i class="fas fa-arrow-up"></i> 0.00%</div>
         </div>
 
-        <!-- Quick Actions -->
         <div class="card reveal">
           <div class="card-header">
             <h3 class="card-title"><i class="fas fa-th-large"></i> Quick Access</h3>
@@ -1188,7 +322,7 @@ body { font-family: var(--font-sans); background: var(--bg-body); color: var(--t
                 </div>
               </a>
 
-              <% if (typeof user !== 'undefined' && user.role === 'admin') { %>
+              <% if (typeof user !== 'undefined' && user && user.role === 'admin') { %>
               <a href="/admin" class="widget-item">
                 <div class="widget-icon red"><i class="fas fa-shield-alt"></i></div>
                 <div class="widget-content">
@@ -1200,11 +334,97 @@ body { font-family: var(--font-sans); background: var(--bg-body); color: var(--t
             </div>
           </div>
         </div>
-
       </div>
-
     </div>
+  </div>
+</div>
 
+<div class="bottom-ticker-bar">
+  <div class="bottom-ticker-track" id="tickerTrack">
+    <div class="bottom-ticker-item">
+      <span class="ticker-symbol">BTC</span>
+      <span class="ticker-price" id="ticker-btc-price">$63,957</span>
+      <span class="ticker-change up" id="ticker-btc-change"><i class="fas fa-arrow-up"></i> +2.06%</span>
+    </div>
+    <span class="bottom-ticker-divider">|</span>
+    <div class="bottom-ticker-item">
+      <span class="ticker-symbol">ETH</span>
+      <span class="ticker-price" id="ticker-eth-price">$3,619.00</span>
+      <span class="ticker-change up" id="ticker-eth-change"><i class="fas fa-arrow-up"></i> +0.70%</span>
+    </div>
+    <span class="bottom-ticker-divider">|</span>
+    <div class="bottom-ticker-item">
+      <span class="ticker-symbol">TSLA</span>
+      <span class="ticker-price" id="ticker-tsla-price">$425.30</span>
+      <span class="ticker-change up" id="ticker-tsla-change"><i class="fas fa-arrow-up"></i> +1.12%</span>
+    </div>
+    <span class="bottom-ticker-divider">|</span>
+    <div class="bottom-ticker-item">
+      <span class="ticker-symbol">AMZN</span>
+      <span class="ticker-price" id="ticker-amzn-price">$241.70</span>
+      <span class="ticker-change up" id="ticker-amzn-change"><i class="fas fa-arrow-up"></i> +1.41%</span>
+    </div>
+    <span class="bottom-ticker-divider">|</span>
+    <div class="bottom-ticker-item">
+      <span class="ticker-symbol">AAPL</span>
+      <span class="ticker-price" id="ticker-aapl-price">$232.90</span>
+      <span class="ticker-change up" id="ticker-aapl-change"><i class="fas fa-arrow-up"></i> +0.89%</span>
+    </div>
+    <span class="bottom-ticker-divider">|</span>
+    <div class="bottom-ticker-item">
+      <span class="ticker-symbol">SOL</span>
+      <span class="ticker-price" id="ticker-sol-price">$142.50</span>
+      <span class="ticker-change down" id="ticker-sol-change"><i class="fas fa-arrow-down"></i> -0.45%</span>
+    </div>
+    <span class="bottom-ticker-divider">|</span>
+    <div class="bottom-ticker-item">
+      <span class="ticker-symbol">NVDA</span>
+      <span class="ticker-price" id="ticker-nvda-price">$875.20</span>
+      <span class="ticker-change up" id="ticker-nvda-change"><i class="fas fa-arrow-up"></i> +2.34%</span>
+    </div>
+    <span class="bottom-ticker-divider">|</span>
+    <div class="bottom-ticker-item">
+      <span class="ticker-symbol">BTC</span>
+      <span class="ticker-price">$63,957</span>
+      <span class="ticker-change up"><i class="fas fa-arrow-up"></i> +2.06%</span>
+    </div>
+    <span class="bottom-ticker-divider">|</span>
+    <div class="bottom-ticker-item">
+      <span class="ticker-symbol">ETH</span>
+      <span class="ticker-price">$3,619.00</span>
+      <span class="ticker-change up"><i class="fas fa-arrow-up"></i> +0.70%</span>
+    </div>
+    <span class="bottom-ticker-divider">|</span>
+    <div class="bottom-ticker-item">
+      <span class="ticker-symbol">TSLA</span>
+      <span class="ticker-price">$425.30</span>
+      <span class="ticker-change up"><i class="fas fa-arrow-up"></i> +1.12%</span>
+    </div>
+    <span class="bottom-ticker-divider">|</span>
+    <div class="bottom-ticker-item">
+      <span class="ticker-symbol">AMZN</span>
+      <span class="ticker-price">$241.70</span>
+      <span class="ticker-change up"><i class="fas fa-arrow-up"></i> +1.41%</span>
+    </div>
+    <span class="bottom-ticker-divider">|</span>
+    <div class="bottom-ticker-item">
+      <span class="ticker-symbol">AAPL</span>
+      <span class="ticker-price">$232.90</span>
+      <span class="ticker-change up"><i class="fas fa-arrow-up"></i> +0.89%</span>
+    </div>
+    <span class="bottom-ticker-divider">|</span>
+    <div class="bottom-ticker-item">
+      <span class="ticker-symbol">SOL</span>
+      <span class="ticker-price">$142.50</span>
+      <span class="ticker-change down"><i class="fas fa-arrow-down"></i> -0.45%</span>
+    </div>
+    <span class="bottom-ticker-divider">|</span>
+    <div class="bottom-ticker-item">
+      <span class="ticker-symbol">NVDA</span>
+      <span class="ticker-price">$875.20</span>
+      <span class="ticker-change up"><i class="fas fa-arrow-up"></i> +2.34%</span>
+    </div>
+    <span class="bottom-ticker-divider">|</span>
   </div>
 </div>
 
@@ -1212,24 +432,46 @@ body { font-family: var(--font-sans); background: var(--bg-body); color: var(--t
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-  // BTC Price Socket
   if (typeof io !== 'undefined') {
     const socket = io();
+
     socket.on('btcPrice', (data) => {
       if (!data || !data.price) return;
+
       const priceEl = document.getElementById('btcPrice');
       const changeEl = document.getElementById('btcChange');
-      priceEl.textContent = '$' + data.price.toLocaleString();
+      if (priceEl) priceEl.textContent = '$' + data.price.toLocaleString();
       const pct = data.change24h ? data.change24h.toFixed(2) : '0.00';
       const isPositive = data.change24h >= 0;
-      changeEl.className = 'ticker-widget-change ' + (isPositive ? 'up' : 'down');
-      changeEl.innerHTML = `<i class="fas fa-arrow-${isPositive ? 'up' : 'down'}"></i> ${Math.abs(pct)}%`;
+      if (changeEl) {
+        changeEl.className = 'ticker-widget-change ' + (isPositive ? 'up' : 'down');
+        changeEl.innerHTML = '<i class="fas fa-arrow-' + (isPositive ? 'up' : 'down') + '"></i> ' + Math.abs(pct) + '%';
+      }
+
+      const tickerBtcPrice = document.getElementById('ticker-btc-price');
+      const tickerBtcChange = document.getElementById('ticker-btc-change');
+      if (tickerBtcPrice) tickerBtcPrice.textContent = '$' + data.price.toLocaleString();
+      if (tickerBtcChange) {
+        tickerBtcChange.className = 'ticker-change ' + (isPositive ? 'up' : 'down');
+        tickerBtcChange.innerHTML = '<i class="fas fa-arrow-' + (isPositive ? 'up' : 'down') + '"></i> ' + (isPositive ? '+' : '') + pct + '%';
+      }
+    });
+
+    socket.on('ethPrice', (data) => {
+      if (!data || !data.price) return;
+      const el = document.getElementById('ticker-eth-price');
+      const ch = document.getElementById('ticker-eth-change');
+      if (el) el.textContent = '$' + data.price.toLocaleString();
+      if (ch && data.change24h !== undefined) {
+        const isPos = data.change24h >= 0;
+        ch.className = 'ticker-change ' + (isPos ? 'up' : 'down');
+        ch.innerHTML = '<i class="fas fa-arrow-' + (isPos ? 'up' : 'down') + '"></i> ' + (isPos ? '+' : '') + data.change24h.toFixed(2) + '%';
+      }
     });
   }
 
-  // Dismiss Alert
   function dismissAlert(alertId) {
-    const alert = document.getElementById(`alert-${alertId}`);
+    const alert = document.getElementById('alert-' + alertId);
     if (alert) {
       alert.style.opacity = '0';
       alert.style.transform = 'translateX(20px)';
@@ -1243,7 +485,6 @@ body { font-family: var(--font-sans); background: var(--bg-body); color: var(--t
     }
   }
 
-  // Scroll Reveal
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
@@ -1255,11 +496,10 @@ body { font-family: var(--font-sans); background: var(--bg-body); color: var(--t
 
   document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-  // Restore dismissed alerts
   document.addEventListener('DOMContentLoaded', () => {
     const dismissed = JSON.parse(sessionStorage.getItem('dismissedAlerts') || '[]');
     dismissed.forEach(id => {
-      const alert = document.getElementById(`alert-${id}`);
+      const alert = document.getElementById('alert-' + id);
       if (alert) alert.remove();
     });
   });

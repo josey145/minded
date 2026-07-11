@@ -83,6 +83,8 @@
         border-radius: 4px;
     }
 
+    
+
     @media (prefers-reduced-motion: reduce) {
         *, *::before, *::after {
             animation-duration: 0.001ms !important;
@@ -91,6 +93,81 @@
             scroll-behavior: auto !important;
         }
     }
+
+
+    /* ==================== NETWORK TOAST ==================== */
+        .net-toast-wrap {
+            position: fixed;
+            top: 88px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+            pointer-events: none;
+            width: 100%;
+            padding: 0 16px;
+        }
+
+        .net-toast {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            box-shadow: 0 12px 34px rgba(0, 0, 0, 0.45);
+            border: 1px solid var(--edge);
+            background: var(--surface);
+            color: var(--paper);
+            opacity: 0;
+            transform: translateY(-14px) scale(0.96);
+            transition: opacity 0.28s ease, transform 0.28s ease;
+            max-width: 92vw;
+        }
+
+        .net-toast.show {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        .net-toast .net-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .net-toast.offline {
+            border-color: var(--alert);
+            background: var(--alert-dim);
+            color: var(--alert);
+        }
+        .net-toast.offline .net-dot { background: var(--alert); animation: pulse 1s ease-in-out infinite; }
+
+        .net-toast.slow {
+            border-color: var(--warning);
+            background: rgba(245, 185, 66, 0.12);
+            color: var(--warning);
+        }
+        .net-toast.slow .net-dot { background: var(--warning); animation: pulse 1.2s ease-in-out infinite; }
+
+        .net-toast.online {
+            border-color: var(--signal);
+            background: var(--signal-dim);
+            color: var(--signal);
+        }
+        .net-toast.online .net-dot { background: var(--signal); box-shadow: 0 0 0 4px var(--signal-dim); }
+
+        @media (max-width: 480px) {
+            .net-toast-wrap { top: 78px; }
+            .net-toast { font-size: 12px; padding: 10px 16px; }
+        }
 
     /* Gradient Text */
     .gradient-text {
