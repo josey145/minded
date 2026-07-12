@@ -1,0 +1,138 @@
+
+    .payment-container {
+        max-width: 600px;
+        margin: 40px auto;
+        padding: 24px;
+    }
+
+    .payment-card {
+        background: #111118;
+        border: 1px solid #1e1e2e;
+        border-radius: 20px;
+        padding: 32px;
+        text-align: center;
+    }
+
+    .payment-header {
+        margin-bottom: 24px;
+    }
+
+    .payment-icon {
+        width: 80px;
+        height: 80px;
+        background: rgba(245, 158, 11, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 16px;
+        font-size: 40px;
+        color: #f59e0b;
+    }
+
+    .amount-display {
+        font-size: 32px;
+        font-weight: 700;
+        color: #f4f4f5;
+        margin-bottom: 8px;
+    }
+
+    .qr-section {
+        background: white;
+        padding: 20px;
+        border-radius: 16px;
+        margin: 24px 0;
+        display: inline-block;
+    }
+
+    .qr-code {
+        width: 200px;
+        height: 200px;
+    }
+
+    .address-box {
+        background: #0d0d14;
+        border: 1px solid #1e1e2e;
+        border-radius: 12px;
+        padding: 16px;
+        margin: 16px 0;
+        position: relative;
+    }
+
+    .address-label {
+        font-size: 12px;
+        color: #52525b;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+    }
+
+    .address-value {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 14px;
+        color: #f4f4f5;
+        word-break: break-all;
+        line-height: 1.5;
+    }
+
+    .copy-btn {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        background: #1e1e2e;
+        border: none;
+        color: #a1a1aa;
+        padding: 8px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 12px;
+    }
+
+    .copy-btn:hover {
+        background: #2e2e3e;
+        color: #f4f4f5;
+    }
+
+    .warning-box {
+        background: rgba(245, 158, 11, 0.1);
+        border: 1px solid rgba(245, 158, 11, 0.2);
+        border-radius: 12px;
+        padding: 16px;
+        margin: 24px 0;
+        text-align: left;
+    }
+
+    .warning-box i {
+        color: #f59e0b;
+        margin-right: 8px;
+    }
+
+    .timer {
+        font-size: 24px;
+        font-weight: 700;
+        color: #ef4444;
+        margin: 16px 0;
+    }
+
+    .btn-confirm {
+        width: 100%;
+        padding: 16px;
+        background: #22c55e;
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 16px;
+    }
+
+    .btn-cancel {
+        width: 100%;
+        padding: 16px;
+        background: transparent;
+        border: 1px solid #1e1e2e;
+        color: #a1a1aa;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 12px;
+    }

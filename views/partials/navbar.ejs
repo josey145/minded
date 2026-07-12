@@ -163,104 +163,14 @@
     </div>
 
     
+<script src="../../js/navbar.js"></script>
+<script>
 
-    <script>
-        const mobileMenu = document.getElementById('mobileMenu');
-        const mobileBtn  = document.getElementById('mobileMenuBtn');
-        const closeBtn   = document.getElementById('closeMenuBtn');
-        const overlay    = document.getElementById('mobileOverlay');
-
-        function openMobileMenu()  { mobileMenu.classList.add('active');    document.body.style.overflow = 'hidden'; }
-        function closeMobileMenu() { mobileMenu.classList.remove('active'); document.body.style.overflow = ''; }
-
-        mobileBtn.addEventListener('click', openMobileMenu);
-        closeBtn.addEventListener('click',  closeMobileMenu);
-        overlay.addEventListener('click',   closeMobileMenu);
-        document.querySelectorAll('.mobile-link').forEach(link => {
-            link.addEventListener('click', closeMobileMenu);
-        });
-    </script>
-
-    <script>
-(function () {
-    const wrap = document.getElementById('netToastWrap');
-    if (!wrap) return;
-
-    let currentToast = null;
-    let hideTimer = null;
-
-    function showToast(type, message, autoHideMs) {
-        // remove any existing toast first
-        if (currentToast) {
-            currentToast.remove();
-            currentToast = null;
-        }
-        clearTimeout(hideTimer);
-
-        const toast = document.createElement('div');
-        toast.className = 'net-toast ' + type;
-        toast.innerHTML = '<span class="net-dot"></span><span>' + message + '</span>';
-        wrap.appendChild(toast);
-        currentToast = toast;
-
-        // trigger enter animation
-        requestAnimationFrame(() => toast.classList.add('show'));
-
-        if (autoHideMs) {
-            hideTimer = setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => {
-                    if (toast.parentNode) toast.remove();
-                    if (currentToast === toast) currentToast = null;
-                }, 300);
-            }, autoHideMs);
-        }
-    }
-
-    async function pingCheck() {
-        const start = performance.now();
-        try {
-            // Uses /ping if you add the route below; falls back to favicon if not.
-            const res = await fetch('/ping', { method: 'GET', cache: 'no-store' })
-                .catch(() => fetch('/favicon.ico', { method: 'GET', cache: 'no-store' }));
-            const elapsed = performance.now() - start;
-            if (!res.ok) throw new Error('bad status');
-            return elapsed > 900 ? 'slow' : 'online';
-        } catch (e) {
-            return 'offline';
-        }
-    }
-
-    async function handleStatusChange() {
-        if (!navigator.onLine) {
-            showToast('offline', 'You are offline', null); // stays until resolved
-            return;
-        }
-        const result = await pingCheck();
-        if (result === 'offline') {
-            showToast('offline', 'You are offline', null);
-        } else if (result === 'slow') {
-            showToast('slow', 'Slow connection', 4000);
-        } else {
-            showToast('online', 'Back online', 3000);
-        }
-    }
-
-    window.addEventListener('online', handleStatusChange);
-    window.addEventListener('offline', () => showToast('offline', 'You are offline', null));
-
-    console.log('net script loaded');
-
-    // periodic background check to catch slow connections even without an online/offline event
-    setInterval(async () => {
-        if (!navigator.onLine) return; // offline event already covers this
-        const result = await pingCheck();
-        if (result === 'slow') showToast('slow', 'Slow connection', 4000);
-        if (result === 'offline') showToast('offline', 'You are offline', null);
-    }, 15000);
-})();
 </script>
+    
 </nav>
+
+
 
 <!-- Network status popup -->
 <div class="net-toast-wrap" id="netToastWrap" aria-live="polite"></div>
