@@ -1,12 +1,25 @@
 <!DOCTYPE html>
-<html>
+<html lang="<%= language || 'en' %>" dir="<%= language === 'ar' ? 'rtl' : 'ltr' %>">
 <head>
     <title>Investment Landing</title>
     <link rel="stylesheet" href="/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>window.appPreferredLanguage = <%- JSON.stringify(language || 'en') %>;</script>
+    <script defer src="/js/page-translation.js"></script>
 </head>
 
 <body>
+<form action="/set-language" method="POST" class="lang-picker notranslate" translate="no" style="position:fixed;top:12px;right:12px;z-index:10;">
+    <select name="language" aria-label="Choose language" style="padding:8px;">
+        <option value="en" <%= language === 'en' ? 'selected' : '' %>>English</option>
+        <option value="es" <%= language === 'es' ? 'selected' : '' %>>Español</option>
+        <option value="fr" <%= language === 'fr' ? 'selected' : '' %>>Français</option>
+        <option value="pt" <%= language === 'pt' ? 'selected' : '' %>>Português</option>
+        <option value="ar" <%= language === 'ar' ? 'selected' : '' %>>العربية</option>
+        <option value="de" <%= language === 'de' ? 'selected' : '' %>>Deutsch</option>
+        <option value="zh" <%= language === 'zh' ? 'selected' : '' %>>中文</option>
+    </select>
+</form>
 
 <div class="hero">
 

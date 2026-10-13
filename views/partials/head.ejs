@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<%= language || 'en' %>" dir="<%= language === 'ar' ? 'rtl' : 'ltr' %>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,6 +16,8 @@
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="../../css/head.css">
+    <script>window.appPreferredLanguage = <%- JSON.stringify(language || 'en') %>;</script>
+    <script defer src="/js/page-translation.js"></script>
+    <link rel="stylesheet" href="/css/head.css">
     </head>
 <body>

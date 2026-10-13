@@ -16,6 +16,7 @@ const { addUnreadCount }   = require('./middleware/unreadMessages');
 const telegramBot          = require('./services/telegramBot');
 const signalBot            = require('./services/signalBot');
 const { formatCurrency }   = require('./utils/currency');
+const { translations, getText } = require('./utils/translations');
 const tradingViewService   = require('./services/tradingViewService');
 
 const app    = express();
@@ -37,19 +38,25 @@ app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc:    ["'self'"],
-            styleSrc:      ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"],
-            scriptSrc:     ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://cdn.jsdelivr.net", "https://s3.tradingview.com"],
+            styleSrc:      ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com", "https://translate.googleapis.com"],
+            scriptSrc:     ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://cdn.jsdelivr.net", "https://s3.tradingview.com", "https://translate.google.com", "https://translate.googleapis.com"],
             scriptSrcAttr: ["'unsafe-inline'"],
             fontSrc:       ["'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com"],
-            imgSrc:        ["'self'", "data:", "https:"],
-            connectSrc:    ["'self'", "https://api.coingecko.com", "wss:", "ws:", "https://cdn.jsdelivr.net", "https://s3.tradingview.com"],
+            imgSrc:        ["'self'", "data:", "https:", "https://translate.google.com"],
+            connectSrc:    ["'self'", "https://api.coingecko.com", "wss:", "ws:", "https://cdn.jsdelivr.net", "https://s3.tradingview.com", "https://translate.googleapis.com", "https://translate.google.com"],
             workerSrc:     ["'self'", "blob:"],
-            frameSrc:      ["'self'", "https://s.tradingview.com"]
+            frameSrc:      ["'self'", "https://s.tradingview.com", "https://translate.google.com", "https://translate.googleapis.com"]
         }
     }
 }));
 
-app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
+app.use(rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 500,
+    skip: req => /\.(css|js|png|jpe?g|gif|ico|svg|woff2?|ttf|map)$/i.test(req.path),
+    standardHeaders: true,
+    legacyHeaders: false
+}));
 
 // ==================== BODY & SESSION ====================
 app.use(express.json());
@@ -70,11 +77,18 @@ app.use(flash());
 
 // ==================== SINGLE GLOBAL LOCALS BLOCK ====================
 app.use((req, res, next) => {
-    res.locals.user        = req.session.user || null;
+    const requestedLang = req.query.lang || req.body?.lang || req.session?.language || 'en';
+    const language = translations[requestedLang] ? requestedLang : 'en';
+
+    req.session.language = language;
+    res.locals.user = req.session.user || null;
+    res.locals.language = language;
+    res.locals.translations = translations[language];
+    res.locals.getText = (key, fallback) => getText(language, key, fallback);
     res.locals.success_msg = req.flash('success');
-    res.locals.error_msg   = req.flash('error');
-    res.locals.messages    = {
-        error:   req.flash('error'),
+    res.locals.error_msg = req.flash('error');
+    res.locals.messages = {
+        error: req.flash('error'),
         success: req.flash('success')
     };
     res.locals.signalBotConfigured = signalBot.isConfigured();
@@ -143,6 +157,24 @@ app.set('views', path.join(__dirname, 'views'));
 app.use((req, res, next) => {
     console.log('📨 Request:', req.method, req.url);
     next();
+});
+
+// ==================== LANGUAGE ====================
+app.post('/set-language', (req, res) => {
+    const language = req.body?.language;
+    if (translations[language]) {
+        req.session.language = language;
+    }
+    const referer = req.get('referer');
+    try {
+        const redirectUrl = new URL(referer);
+        const redirectTo = redirectUrl.host === req.get('host')
+            ? `${redirectUrl.pathname}${redirectUrl.search}`
+            : '/';
+        return res.redirect(redirectTo);
+    } catch {
+        return res.redirect('/');
+    }
 });
 
 // ==================== WEBHOOK ====================

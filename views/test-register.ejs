@@ -1,3 +1,5 @@
+<script>window.appPreferredLanguage = <%- JSON.stringify(language || 'en') %>;</script>
+<script defer src="/js/page-translation.js"></script>
 <form action="/register-simple" method="POST">
     <input type="text" name="username" placeholder="Username" required>
     <input type="email" name="email" placeholder="Email" required>

@@ -1,10 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<%= language || 'en' %>" dir="<%= language === 'ar' ? 'rtl' : 'ltr' %>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Under Maintenance — <%= site.name %></title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>window.appPreferredLanguage = <%- JSON.stringify(language || 'en') %>;</script>
+    <script defer src="/js/page-translation.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -146,6 +148,17 @@
     </style>
 </head>
 <body>
+    <form action="/set-language" method="POST" class="lang-picker notranslate" translate="no" style="position:fixed;top:16px;right:16px;z-index:10;">
+        <select name="language" aria-label="Choose language" style="padding:8px;">
+            <option value="en" <%= language === 'en' ? 'selected' : '' %>>English</option>
+            <option value="es" <%= language === 'es' ? 'selected' : '' %>>Español</option>
+            <option value="fr" <%= language === 'fr' ? 'selected' : '' %>>Français</option>
+            <option value="pt" <%= language === 'pt' ? 'selected' : '' %>>Português</option>
+            <option value="ar" <%= language === 'ar' ? 'selected' : '' %>>العربية</option>
+            <option value="de" <%= language === 'de' ? 'selected' : '' %>>Deutsch</option>
+            <option value="zh" <%= language === 'zh' ? 'selected' : '' %>>中文</option>
+        </select>
+    </form>
     <div class="container">
 
         <div class="logo"><%= site.name.toUpperCase() %></div>

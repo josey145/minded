@@ -4,8 +4,8 @@
 <div class="auth-page">
     <div class="auth-container animate-fade-in">
         <div class="auth-header">
-            <h1 class="auth-title">Welcome Back</h1>
-            <p class="auth-subtitle">Enter your credentials to access your account</p>
+            <h1 class="auth-title"><%= getText('welcome_back') %></h1>
+            <p class="auth-subtitle"><%= getText('enter_credentials') %></p>
         </div>
 
         <% if (success_msg && success_msg.length > 0) { %>
@@ -33,7 +33,7 @@
         <div class="auth-form">
             <form action="/login" method="POST">
                 <div class="form-group">
-                    <label class="form-label">Email Address</label>
+                    <label class="form-label"><%= getText('email_address') %></label>
                     <div class="input-wrap">
                         <i class="fas fa-envelope"></i>
                         <input type="email" name="email" class="form-input" placeholder="name@example.com" required style="padding-left: 48px;">
@@ -41,7 +41,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Password</label>
+                    <label class="form-label"><%= getText('password') %></label>
                     <div class="input-wrap">
                         <i class="fas fa-lock"></i>
                         <input type="password" name="password" class="form-input" placeholder="••••••••" required style="padding-left: 48px;">
@@ -51,18 +51,18 @@
                 <div class="login-row">
                     <label class="remember-label">
                         <input type="checkbox" name="remember">
-                        Remember me
+                        <%= getText('remember_me') %>
                     </label>
-                    <a href="/forgot-password" class="forgot-link">Forgot password?</a>
+                    <a href="/forgot-password" class="forgot-link"><%= getText('forgot_password') %></a>
                 </div>
 
                 <button type="submit" class="btn btn-primary" style="width: 100%;">
                     <i class="fas fa-sign-in-alt"></i>
-                    Sign In
+                    <%= getText('sign_in') %>
                 </button>
             </form>
 
-            <div class="or-divider">Or continue with</div>
+            <div class="or-divider"><%= getText('continue_with') %></div>
 
             <div style="display: flex; gap: 12px; margin-top: 16px;">
                 <button type="button" class="btn btn-outline" style="flex: 1;">
@@ -75,7 +75,7 @@
         </div>
 
         <div class="auth-footer">
-            Don't have an account? <a href="/register">Create one now</a>
+            <%= getText('no_account') %> <a href="/register"><%= getText('create_now') %></a>
         </div>
     </div>
 </div>

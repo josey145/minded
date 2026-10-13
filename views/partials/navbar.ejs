@@ -8,13 +8,26 @@
 
         <!-- Desktop Navigation -->
         <div class="nav-links">
+            <div class="lang-picker notranslate" translate="no" style="display:flex; align-items:center; margin-right: 12px;">
+                <form action="/set-language" method="POST" style="margin:0;">
+                    <select name="language" class="form-input" style="min-width: 110px; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.05); color: var(--mist); border: 1px solid var(--edge);">
+                        <option value="en" <%= language === 'en' ? 'selected' : '' %>>English</option>
+                        <option value="es" <%= language === 'es' ? 'selected' : '' %>>Español</option>
+                        <option value="fr" <%= language === 'fr' ? 'selected' : '' %>>Français</option>
+                        <option value="pt" <%= language === 'pt' ? 'selected' : '' %>>Português</option>
+                        <option value="ar" <%= language === 'ar' ? 'selected' : '' %>>العربية</option>
+                        <option value="de" <%= language === 'de' ? 'selected' : '' %>>Deutsch</option>
+                        <option value="zh" <%= language === 'zh' ? 'selected' : '' %>>中文</option>
+                    </select>
+                </form>
+            </div>
             <% if (!user) { %>
-                <a href="/" class="nav-link">Home</a>
-                <a href="/about" class="nav-link">About</a>
-                <a href="/faq" class="nav-link">FAQ</a>
-                <a href="/terms" class="nav-link">Terms</a>
-                <a href="/login" class="nav-link">Login</a>
-                <a href="/register" class="btn btn-primary btn-sm">Get Started</a>
+                <a href="/" class="nav-link"><%= getText('home') %></a>
+                <a href="/about" class="nav-link"><%= getText('about') %></a>
+                <a href="/faq" class="nav-link"><%= getText('faq') %></a>
+                <a href="/terms" class="nav-link"><%= getText('terms') %></a>
+                <a href="/login" class="nav-link"><%= getText('login') %></a>
+                <a href="/register" class="btn btn-primary btn-sm"><%= getText('get_started') %></a>
             <% } else { %>
                 <div class="user-menu">
                     <button class="btn btn-outline btn-sm user-btn">
@@ -24,23 +37,23 @@
                     </button>
                     <div class="user-dropdown">
                         <a href="/dashboard" class="dropdown-item">
-                            <i class="fas fa-chart-line"></i> Dashboard
+                            <i class="fas fa-chart-line"></i> <%= getText('dashboard') %>
                         </a>
                         <a href="/trading" class="dropdown-item" style="position: relative;">
-                            <i class="fas fa-exchange-alt"></i> Trading
+                            <i class="fas fa-exchange-alt"></i> <%= getText('trading') %>
                             <span class="trading-sticker">LIVE</span>
                         </a>
                         <a href="/transactions/withdraw/verify" class="dropdown-item">
-                            <i class="fas fa-arrow-up"></i> Withdraw
+                            <i class="fas fa-arrow-up"></i> <%= getText('withdraw') %>
                         </a>
                         <a href="/investments" class="dropdown-item">
-                            <i class="fas fa-rocket"></i> Invest
+                            <i class="fas fa-rocket"></i> <%= getText('invest') %>
                         </a>
                         <a href="/transactions/history" class="dropdown-item">
-                            <i class="fas fa-list"></i> Transactions
+                            <i class="fas fa-list"></i> <%= getText('transactions') %>
                         </a>
                         <a href="/messages" class="dropdown-item" style="position: relative; display: flex; align-items: center; gap: 8px;">
-                            <i class="fas fa-bell"></i> Messages
+                            <i class="fas fa-bell"></i> <%= getText('messages') %>
                             <% if (typeof unreadMessages !== 'undefined' && unreadMessages > 0) { %>
                                 <span style="background: var(--alert); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center;">
                                     <%= unreadMessages %>
@@ -48,24 +61,24 @@
                             <% } %>
                         </a>
                         <a href="/profile/settings" class="dropdown-item">
-                            <i class="fas fa-cog"></i> Settings
+                            <i class="fas fa-cog"></i> <%= getText('settings') %>
                         </a>
 
                         <hr style="margin: 8px 0; border-color: var(--edge);">
-                        <a href="/" class="dropdown-item"><i class="fas fa-home"></i> Home</a>
-                        <a href="/about" class="dropdown-item"><i class="fas fa-info-circle"></i> About</a>
-                        <a href="/faq" class="dropdown-item"><i class="fas fa-question-circle"></i> FAQ</a>
-                        <a href="/terms" class="dropdown-item"><i class="fas fa-file-contract"></i> Terms</a>
+                        <a href="/" class="dropdown-item"><i class="fas fa-home"></i> <%= getText('home') %></a>
+                        <a href="/about" class="dropdown-item"><i class="fas fa-info-circle"></i> <%= getText('about') %></a>
+                        <a href="/faq" class="dropdown-item"><i class="fas fa-question-circle"></i> <%= getText('faq') %></a>
+                        <a href="/terms" class="dropdown-item"><i class="fas fa-file-contract"></i> <%= getText('terms') %></a>
 
                         <% if (user.role === 'admin') { %>
                             <hr style="margin: 8px 0; border-color: var(--edge);">
-                            <a href="/admin" class="dropdown-item"><i class="fas fa-shield-alt"></i> Admin Panel</a>
+                            <a href="/admin" class="dropdown-item"><i class="fas fa-shield-alt"></i> <%= getText('admin_panel') %></a>
                             <a href="/admin/withdrawals" class="dropdown-item"><i class="fas fa-money-bill-transfer"></i> Withdrawals</a>
                             <a href="/admin/trade-for-user" class="dropdown-item"><i class="fas fa-chart-line"></i> Trade for User</a>
                             <a href="/admin/create-account" class="dropdown-item"><i class="fas fa-user-plus"></i> Create Account</a>
                             <a href="/admin/settings" class="dropdown-item"><i class="fas fa-cog"></i> Admin Settings</a>
                             <a href="/admin/messages" class="dropdown-item">
-                                <i class="fas fa-comments"></i> Messages
+                                <i class="fas fa-comments"></i> <%= getText('messages') %>
                                 <% if (typeof unreadCount !== 'undefined' && unreadCount > 0) { %>
                                     <span class="badge" style="margin: 0 0 0 auto;"><%= unreadCount %></span>
                                 <% } %>
@@ -76,7 +89,7 @@
                         <hr style="margin: 8px 0; border-color: var(--edge);">
                         <form action="/logout" method="POST">
                             <button type="submit" class="dropdown-item logout-btn">
-                                <i class="fas fa-sign-out-alt"></i> Logout
+                                <i class="fas fa-sign-out-alt"></i> <%= getText('logout') %>
                             </button>
                         </form>
                     </div>
@@ -106,6 +119,17 @@
             </div>
 
             <div class="mobile-menu-links">
+                <form action="/set-language" method="POST" class="lang-picker notranslate" translate="no" style="margin: 0 16px 12px;">
+                    <select name="language" class="form-input" aria-label="Choose language" style="width: 100%; padding: 10px; border-radius: 10px; background: rgba(255,255,255,0.05); color: var(--mist); border: 1px solid var(--edge);">
+                        <option value="en" <%= language === 'en' ? 'selected' : '' %>>English</option>
+                        <option value="es" <%= language === 'es' ? 'selected' : '' %>>Español</option>
+                        <option value="fr" <%= language === 'fr' ? 'selected' : '' %>>Français</option>
+                        <option value="pt" <%= language === 'pt' ? 'selected' : '' %>>Português</option>
+                        <option value="ar" <%= language === 'ar' ? 'selected' : '' %>>العربية</option>
+                        <option value="de" <%= language === 'de' ? 'selected' : '' %>>Deutsch</option>
+                        <option value="zh" <%= language === 'zh' ? 'selected' : '' %>>中文</option>
+                    </select>
+                </form>
                 <% if (!user) { %>
                     <a href="/" class="mobile-link">Home</a>
                     <a href="/about" class="mobile-link">About</a>
@@ -163,7 +187,9 @@
     </div>
 
     
-<script src="../../js/navbar.js"></script>
+<script>window.appPreferredLanguage = <%- JSON.stringify(language || 'en') %>;</script>
+<script src="/js/page-translation.js"></script>
+<script src="/js/navbar.js"></script>
 <script>
 
 </script>
