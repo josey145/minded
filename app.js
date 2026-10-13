@@ -260,15 +260,8 @@ app.use((err, req, res, next) => {
 
 // ==================== START SERVER ====================
 const PORT = process.env.PORT || 3000;
-exec(
-    `FOR /F "tokens=5" %a IN ('netstat -ano ^| findstr :${PORT}') DO taskkill /F /PID %a 2>nul`,
-    () => {
-        setTimeout(() => {
-            server.listen(PORT, () => {
-                console.log(`🚀 Server running on port ${PORT}`);
-                console.log(`📊 TradingView webhook: http://localhost:${PORT}/webhook/tradingview`);
-                console.log(`🔧 Environment: ${process.env.NODE_ENV || 'development'}`);
-            });
-        }, 1000);
-    }
-);
+server.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`📊 TradingView webhook: http://localhost:${PORT}/webhook/tradingview`);
+    console.log(`🔧 Environment: ${process.env.NODE_ENV || 'development'}`);
+});
