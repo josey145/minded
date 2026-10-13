@@ -260,8 +260,17 @@ app.use((err, req, res, next) => {
 
 // ==================== START SERVER ====================
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
+const fs = require('fs');
+
+// Create required folders or Fly crashes
+['./uploads', './uploads/ids', './public'].forEach(dir => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+});
+
+server.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`📊 TradingView webhook: http://localhost:${PORT}/webhook/tradingview`);
+    console.log(`📊 TradingView webhook: http://0.0.0.0:${PORT}/webhook/tradingview`);
     console.log(`🔧 Environment: ${process.env.NODE_ENV || 'development'}`);
 });

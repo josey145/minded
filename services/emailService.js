@@ -6,13 +6,11 @@ let cachedSiteName = null;
 let cacheTime = null;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
-// Get site name from database
 async function getSiteName() {
     const now = Date.now();
     if (cachedSiteName && cacheTime && (now - cacheTime) < CACHE_DURATION) {
         return cachedSiteName;
     }
-    
     try {
         const [settings] = await db.execute(
             "SELECT setting_value FROM site_settings WHERE setting_key = 'site_name'"
@@ -25,47 +23,55 @@ async function getSiteName() {
     }
 }
 
-// Clear cache when needed
 function clearSiteNameCache() {
     cachedSiteName = null;
     cacheTime = null;
 }
 
-// Initialize Resend with API key
-const resend = new Resend(process.env.RESEND_API_KEY);
+// ===== FIXED - WON'T CRASH IF NO API KEY =====
+let resend;
+if (process.env.RESEND_API_KEY && process.env.RESEND_API_KEY.startsWith('re_')) {
+  resend = new Resend(process.env.RESEND_API_KEY);
+  console.log('✅ Resend email service initialized');
+} else {
+  console.log('⚠️ RESEND_API_KEY missing - emails disabled, app will still run');
+  resend = {
+    emails: {
+      send: async (data) => {
+        console.log(`📧 Dummy email to ${data.to} - subject: ${data.subject}`);
+        return { data: { id: 'dummy-no-key' }, error: null };
+      }
+    }
+  };
+}
 
-/**
- * Generic email sender with dynamic site name
- * @param {object} options - { to, subject, html }
- */
 const sendEmail = async ({ to, subject, html }) => {
     try {
         const siteName = await getSiteName();
-        
-        // Replace all instances of "Maximum" with actual site name in HTML
         let processedHtml = html;
-        if (siteName !== 'Maximum') {
+        if (siteName!== 'Maximum') {
             processedHtml = html
-                .replace(/Maximum Platform/g, siteName)
-                .replace(/Maximum/g, siteName);
+               .replace(/Maximum Platform/g, siteName)
+               .replace(/Maximum/g, siteName);
         }
-        
+
         const { data, error } = await resend.emails.send({
             from: `${siteName} <support@cue-action.online>`,
             to: to,
             subject: subject.replace(/Maximum/g, siteName),
             html: processedHtml
         });
-        
+
         if (error) {
             throw new Error(error.message);
         }
-        
+
         console.log(`✅ Email sent to ${to}: ${data?.id || 'success'}`);
         return { success: true, id: data?.id };
     } catch (error) {
         console.error(`❌ Failed to send email to ${to}:`, error.message);
-        throw error;
+        // Don't throw - don't crash app for email failure
+        return { success: false, error: error.message };
     }
 };
 
