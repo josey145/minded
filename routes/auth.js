@@ -10,6 +10,7 @@ const { forwardAuthenticated } = require('../middleware/authMiddleware');
 const { loginValidation } = require('../middleware/validation');
 const telegramBot = require('../services/telegramBot');
 const { sendEmail } = require('../services/emailService');
+const { normalizeSiteName } = require('../utils/siteName');
 
 // Helper to get site name
 const getSiteName = async () => {
@@ -17,9 +18,9 @@ const getSiteName = async () => {
         const [settings] = await db.execute(
             "SELECT setting_value FROM site_settings WHERE setting_key = 'site_name'"
         );
-        return settings[0]?.setting_value || 'Maximum';
+        return normalizeSiteName(settings[0]?.setting_value);
     } catch (e) {
-        return 'Maximum';
+        return normalizeSiteName();
     }
 };
 

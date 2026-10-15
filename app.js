@@ -1,4 +1,3 @@
-
 require('dotenv').config();
 
 const express    = require('express');
@@ -7,15 +6,14 @@ const flash      = require('connect-flash');
 const helmet     = require('helmet');
 const rateLimit  = require('express-rate-limit');
 const path       = require('path');
+const fs         = require('fs');
 const http       = require('http');
 const { Server } = require('socket.io');
-const { exec }   = require('child_process');
 
 const { loadSiteSettings } = require('./middleware/siteSettings');
 const { addUnreadCount }   = require('./middleware/unreadMessages');
 const telegramBot          = require('./services/telegramBot');
 const signalBot            = require('./services/signalBot');
-const { formatCurrency }   = require('./utils/currency');
 const { translations, getText } = require('./utils/translations');
 const tradingViewService   = require('./services/tradingViewService');
 
@@ -33,19 +31,55 @@ app.locals.formatCurrency = (amount, currency = 'USD') =>
     new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);
 console.log('✅ TradingView service initialized');
 
-// ==================== SECURITY ====================
+// ==================== SECURITY (SINGLE CSP) ====================
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
-            defaultSrc:    ["'self'"],
-            styleSrc:      ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com", "https://translate.googleapis.com"],
-            scriptSrc:     ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://cdn.jsdelivr.net", "https://s3.tradingview.com", "https://translate.google.com", "https://translate.googleapis.com"],
+            defaultSrc: ["'self'"],
+            scriptSrc: [
+                "'self'", "'unsafe-inline'",
+                "https://cdnjs.cloudflare.com",
+                "https://cdn.jsdelivr.net",
+                "https://s3.tradingview.com",
+                // Tawk.to
+                "https://embed.tawk.to",
+                "https://*.tawk.to"
+            ],
             scriptSrcAttr: ["'unsafe-inline'"],
-            fontSrc:       ["'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com"],
-            imgSrc:        ["'self'", "data:", "https:", "https://translate.google.com"],
-            connectSrc:    ["'self'", "https://api.coingecko.com", "wss:", "ws:", "https://cdn.jsdelivr.net", "https://s3.tradingview.com", "https://translate.googleapis.com", "https://translate.google.com"],
-            workerSrc:     ["'self'", "blob:"],
-            frameSrc:      ["'self'", "https://s.tradingview.com", "https://translate.google.com", "https://translate.googleapis.com"]
+            styleSrc: [
+                "'self'", "'unsafe-inline'",
+                "https://fonts.googleapis.com",
+                "https://cdnjs.cloudflare.com",
+                // Tawk.to
+                "https://embed.tawk.to",
+                "https://*.tawk.to"
+            ],
+            fontSrc: [
+                "'self'", "data:",
+                "https://fonts.gstatic.com",
+                "https://cdnjs.cloudflare.com",
+                "https://*.tawk.to"
+            ],
+            imgSrc: [
+                "'self'", "data:", "blob:", "https:"
+            ],
+            connectSrc: [
+                "'self'", "ws:", "wss:",
+                "https://api.coingecko.com",
+                "https://cdn.jsdelivr.net",
+                "https://s3.tradingview.com",
+                // Tawk.to
+                "https://*.tawk.to",
+                "wss://*.tawk.to",
+                "wss://minded.fly.dev"
+            ],
+            workerSrc: ["'self'", "blob:"],
+            frameSrc: [
+                "'self'",
+                "https://s.tradingview.com",
+                "https://*.tawk.to"
+            ],
+            mediaSrc: ["'self'", "https://*.tawk.to"]
         }
     }
 }));
@@ -81,16 +115,18 @@ app.use((req, res, next) => {
     const language = translations[requestedLang] ? requestedLang : 'en';
 
     req.session.language = language;
-    res.locals.user = req.session.user || null;
-    res.locals.language = language;
+
+    // req.flash() clears messages when read, so read each type only once
+    const successMsg = req.flash('success');
+    const errorMsg   = req.flash('error');
+
+    res.locals.user         = req.session.user || null;
+    res.locals.language     = language;
     res.locals.translations = translations[language];
-    res.locals.getText = (key, fallback) => getText(language, key, fallback);
-    res.locals.success_msg = req.flash('success');
-    res.locals.error_msg = req.flash('error');
-    res.locals.messages = {
-        error: req.flash('error'),
-        success: req.flash('success')
-    };
+    res.locals.getText      = (key, fallback) => getText(language, key, fallback);
+    res.locals.success_msg  = successMsg;
+    res.locals.error_msg    = errorMsg;
+    res.locals.messages     = { error: errorMsg, success: successMsg };
     res.locals.signalBotConfigured = signalBot.isConfigured();
     next();
 });
@@ -133,14 +169,14 @@ app.use(loadSiteSettings);
 app.use((req, res, next) => {
     if (!res.locals.site?.maintenance_mode) return next();
 
-    const isAdmin       = req.session.user?.role === 'admin';
+    const isAdmin = req.session.user?.role === 'admin';
     if (isAdmin) return next();
 
     const isStaticAsset = /\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|map)$/.test(req.path);
     if (isStaticAsset) return next();
 
-    const allowedPaths  = ['/login', '/logout', '/auth', '/admin', '/webhook', '/test-telegram'];
-    const isAllowed     = allowedPaths.some(p =>
+    const allowedPaths = ['/login', '/logout', '/auth', '/admin', '/webhook', '/test-telegram'];
+    const isAllowed    = allowedPaths.some(p =>
         req.path === p || req.path.startsWith(p + '/') || req.path.startsWith(p + '?')
     );
     if (isAllowed) return next();
@@ -211,7 +247,7 @@ const authRoutes              = require('./routes/auth');
 const dashboardRoutes         = require('./routes/dashboard');
 const transactionsRoutes      = require('./routes/transactions');
 const adminRoutes             = require('./routes/admin');
-const tradeRoutes = require('./routes/trade_for_user');
+const tradeRoutes             = require('./routes/trade_for_user');
 const adminCryptoWalletRoutes = require('./routes/adminWallets');
 const profileRoutes           = require('./routes/profile');
 const tradingRoutes           = require('./routes/trading');
@@ -232,10 +268,8 @@ app.use('/profile',              profileRoutes);
 app.use('/trading',              tradingRoutes);
 app.use('/investments',          require('./routes/investments'));
 app.use('/edit',                 editRoutes);
-
-
-app.use('/messages',              userMessageRoutes);
-app.use('/api',                     apiRouter);
+app.use('/messages',             userMessageRoutes);
+app.use('/api',                  apiRouter);
 
 // ==================== SOCKET.IO ====================
 const priceSocket = require('./sockets/priceSocket');
@@ -254,19 +288,14 @@ app.use((err, req, res, next) => {
     });
 });
 
-
-
-
-
 // ==================== START SERVER ====================
-const PORT = process.env.PORT || 3000;
-const fs = require('fs');
+const PORT = process.env.PORT ? parseInt(process.env.PORT) : 8080;
 
 // Create required folders or Fly crashes
 ['./uploads', './uploads/ids', './public'].forEach(dir => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+    }
 });
 
 server.listen(PORT, '0.0.0.0', () => {

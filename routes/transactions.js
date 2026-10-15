@@ -23,7 +23,7 @@ router.get('/withdraw/verify', ensureAuthenticated, async (req, res) => {
         const displayBalance = await convertAmount(user.balance, 'USD', displayCurrency);
 
         res.render('dashboard/withdraw_verify', {
-            title:           'Verify Withdrawal - Maximum',
+            title:           'Verify Withdrawal - TADAWU LX',
             user:            req.session.user,
             balance:         user.balance,                    // Raw USD balance (for processing)
             displayBalance:  displayBalance,                  // Converted for display
@@ -113,7 +113,7 @@ router.get('/withdraw/form', ensureAuthenticated, async (req, res) => {
         );
 
         res.render('dashboard/withdraw', {
-            title:            'Withdraw Funds - Maximum',
+            title:            'Withdraw Funds - TADAWU LX',
             user:             req.session.user,
             balance:          rawBalance,                           // USD (for processing)
             displayBalance:   displayBalance,                       // Converted (for display)
@@ -293,7 +293,7 @@ router.get('/history', ensureAuthenticated, async (req, res) => {
         }));
 
         res.render('dashboard/history', {
-            title: 'History - Maximum',
+            title: 'History - TADAWU LX',
             user: req.session.user,
             transactions,
             tradeHistory: parsedTradeHistory,

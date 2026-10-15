@@ -70,7 +70,7 @@ router.get('/', ensureAuthenticated, async (req, res) => {
         `, [userId]);
 
         res.render('investments/investments', {
-            title:               'Investments & Trading - Maximum',
+            title:               'Investments & Trading - TADAWU LX',
             user:                req.session.user,
             plans:               plans               || [],
             cryptoAddresses:     cryptoAddresses     || [],
@@ -88,7 +88,7 @@ router.get('/', ensureAuthenticated, async (req, res) => {
     } catch (error) {
         console.error('Investments error:', error);
         res.render('investments/investments', {
-            title:               'Investments & Trading - Maximum',
+            title:               'Investments & Trading - TADAWU LX',
             user:                req.session.user,
             plans:               [],
             cryptoAddresses:     [],
@@ -397,7 +397,7 @@ router.post('/action', ensureAuthenticated, async (req, res) => {
 
 router.get('/confirm-crypto', ensureAuthenticated, (req, res) => {
     res.render('investments/confirm_crypto', {
-        title: 'Confirm Payment - Maximum',
+        title: 'Confirm Payment - TADAWU LX',
         user:  req.session.user
     });
 });

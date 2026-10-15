@@ -1,0 +1,32 @@
+{
+  "keys": {
+    "home": "Home",
+    "about": "About",
+    "faq": "FAQ",
+    "terms": "Terms",
+    "login": "Login",
+    "get_started": "Get Started",
+    "dashboard": "Dashboard",
+    "trading": "Trading",
+    "withdraw": "Withdraw",
+    "invest": "Invest",
+    "transactions": "Transactions",
+    "messages": "Messages",
+    "settings": "Settings",
+    "logout": "Logout",
+    "welcome_back": "Welcome Back",
+    "enter_credentials": "Enter your credentials to access your account",
+    "email_address": "Email Address",
+    "password": "Password",
+    "remember_me": "Remember me",
+    "forgot_password": "Forgot password?",
+    "sign_in": "Sign In",
+    "continue_with": "Or continue with",
+    "create_now": "Create one now",
+    "no_account": "Don't have an account?",
+    "admin_panel": "Admin Panel",
+    "language": "Language",
+    "select_language": "Select language"
+  },
+  "phrases": {}
+}

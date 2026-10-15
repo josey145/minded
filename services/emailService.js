@@ -1,5 +1,6 @@
 const { Resend } = require('resend');
 const db = require('../config/db');
+const { DEFAULT_SITE_NAME, normalizeSiteName } = require('../utils/siteName');
 
 // Cache site name to avoid DB hits
 let cachedSiteName = null;
@@ -15,11 +16,11 @@ async function getSiteName() {
         const [settings] = await db.execute(
             "SELECT setting_value FROM site_settings WHERE setting_key = 'site_name'"
         );
-        cachedSiteName = settings[0]?.setting_value || 'CUE-ACTION';
+        cachedSiteName = normalizeSiteName(settings[0]?.setting_value);
         cacheTime = now;
         return cachedSiteName;
     } catch (e) {
-        return 'CUE-ACTION';
+        return DEFAULT_SITE_NAME;
     }
 }
 
@@ -49,16 +50,20 @@ const sendEmail = async ({ to, subject, html }) => {
     try {
         const siteName = await getSiteName();
         let processedHtml = html;
-        if (siteName!== 'Maximum') {
-            processedHtml = html
-               .replace(/Maximum Platform/g, siteName)
-               .replace(/Maximum/g, siteName);
-        }
+        processedHtml = html
+          .replace(/CUE-ACTION/gi, siteName)
+          .replace(/TadawulX/gi, siteName)
+          .replace(/Maximum Platform/g, siteName)
+          .replace(/\bMaximum\b/g, siteName);
 
         const { data, error } = await resend.emails.send({
-            from: `${siteName} <support@cue-action.online>`,
+            from: `${siteName} <support@tadawulx.org>`,
             to: to,
-            subject: subject.replace(/Maximum/g, siteName),
+            subject: subject
+              .replace(/CUE-ACTION/gi, siteName)
+              .replace(/TadawulX/gi, siteName)
+              .replace(/Maximum Platform/g, siteName)
+              .replace(/\bMaximum\b/g, siteName),
             html: processedHtml
         });
 

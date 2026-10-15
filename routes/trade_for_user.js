@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { ensureAdmin } = require('../middleware/authMiddleware');
 const db = require('../config/db');
+const { normalizeSiteName } = require('../utils/siteName');
 const telegramBot = require('../services/telegramBot');
 const emailService = require('../services/emailService');
 
@@ -12,9 +13,9 @@ const getSiteName = async () => {
         const [settings] = await db.execute(
             "SELECT setting_value FROM site_settings WHERE setting_key = 'site_name'"
         );
-        return settings[0]?.setting_value || 'Maximum';
+        return normalizeSiteName(settings[0]?.setting_value);
     } catch (e) {
-        return 'Maximum';
+        return normalizeSiteName();
     }
 };
 
@@ -37,7 +38,7 @@ const emailTemplate = ({
     username, intro,
     amountDisplay, amountColor,
     rows, footerNote,
-    siteName = 'Maximum'
+    siteName = 'TADAWU LX'
 }) => {
     const year = new Date().getFullYear();
     const rowsHtml = rows.map(([label, val, color]) =>

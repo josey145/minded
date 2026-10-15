@@ -12,7 +12,7 @@ router.get('/', ensureAuthenticated, async (req, res) => {
         );
         
         res.render('edit/edit', {
-            title: 'Edit Profile - Maximum',
+            title: 'Edit Profile - TADAWU LX',
             user: users[0]
         });
     } catch (error) {

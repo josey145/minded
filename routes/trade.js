@@ -33,7 +33,7 @@
 //         );
         
 //         res.render('trading/trading', {
-//             title: 'Trading - Maximum',
+//             title: 'Trading - TADAWU LX',
 //             user: req.session.user,
 //             balance: parseFloat(userData.balance) || 0,
 //             currency: userData.currency || 'USD',
@@ -44,7 +44,7 @@
 //     } catch (error) {
 //         console.error('Trading page error:', error);
 //         res.render('trading/trading', {
-//             title: 'Trading - Maximum',
+//             title: 'Trading - TADAWU LX',
 //             user: req.session.user,
 //             balance: 0,
 //             currency: 'USD',

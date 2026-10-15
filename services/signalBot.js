@@ -42,7 +42,7 @@ module.exports = {
 
 ⚠️ <b>Risk Warning:</b> Trade at your own risk.
 
-🤖 <i>Maximum Trading Bot</i>
+🤖 <i>TADAWU LX Trading Bot</i>
             `;
             
             const sent = await bot.sendMessage(SIGNAL_CHANNEL_ID, message, { 

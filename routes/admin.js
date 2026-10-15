@@ -4,6 +4,7 @@ const { ensureAdmin } = require('../middleware/authMiddleware');
 const { ensureAuthenticated } = require('../middleware/authMiddleware');
 const { clearSettingsCache } = require('../middleware/siteSettings');
 const db = require('../config/db');
+const { normalizeSiteName } = require('../utils/siteName');
 
 // ✅ BOT SEPARATION:
 // telegramBot  → Admin-only private bot. Notifies admin of ALL actions.
@@ -21,9 +22,9 @@ const getSiteNameForEmail = async () => {
         const [settings] = await db.execute(
             "SELECT setting_value FROM site_settings WHERE setting_key = 'site_name'"
         );
-        return settings[0]?.setting_value || 'Maximum';
+        return normalizeSiteName(settings[0]?.setting_value);
     } catch (e) {
-        return 'Maximum';
+        return normalizeSiteName();
     }
 };
 
@@ -33,9 +34,9 @@ const getSiteName = async () => {
         const [settings] = await db.execute(
             "SELECT setting_value FROM site_settings WHERE setting_key = 'site_name'"
         );
-        return settings[0]?.setting_value || 'Maximum';
+        return normalizeSiteName(settings[0]?.setting_value);
     } catch (e) {
-        return 'Maximum';
+        return normalizeSiteName();
     }
 };
 
@@ -75,7 +76,7 @@ const emailTemplate = ({
     username, intro,
     amountDisplay, amountColor,
     rows, footerNote,
-    siteName = 'Maximum'  // Add default parameter
+    siteName = 'TADAWU LX'
 }) => {
     const year = new Date().getFullYear();
     const rowsHtml = rows.map(([label, val, color]) =>
@@ -132,7 +133,7 @@ const messageTemplate = ({
     badge, badgeColor,
     username, intro,
     rows, footerNote,
-    siteName = 'Maximum',  // Add default parameter
+    siteName = 'TADAWU LX',
     siteUrl = 'https://yourdomain.com',
     buttonText = 'View Message',
     buttonUrl = '/messages'
@@ -1567,6 +1568,7 @@ router.get('/settings', ensureAdmin, async (req, res) => {
         // Convert to key-value object
         const siteSettings = {};
         settings.forEach(s => { siteSettings[s.setting_key] = s.setting_value; });
+        siteSettings.site_name = normalizeSiteName(siteSettings.site_name);
 
         // Get unread count for navbar
         const unreadCount = await getUnreadCount();
@@ -1600,7 +1602,7 @@ router.post('/settings/site', ensureAdmin, async (req, res) => {
             support_whatsapp:  support_whatsapp || '',
             live_chat_enabled: live_chat_enabled === 'on' ? '1' : '0',
             tawkto_id:         req.body.tawkto_id || '',
-            site_name:         site_name        || 'Maximum',
+            site_name:         normalizeSiteName(site_name),
             maintenance_mode:  maintenance_mode === 'on' ? '1' : '0',
             min_withdrawal:    min_withdrawal   || '10',
             max_withdrawal:    max_withdrawal   || '100000',
@@ -1877,7 +1879,7 @@ router.post('/messages/send', ensureAdmin, async (req, res) => {
         const [[siteSetting]] = await conn.execute(
             "SELECT setting_value FROM site_settings WHERE setting_key = 'site_name'"
         );
-        const siteName = siteSetting?.setting_value || 'Maximum';
+        const siteName = normalizeSiteName(siteSetting?.setting_value);
 
         // Insert message
         const [result] = await conn.execute(`
@@ -2057,7 +2059,7 @@ router.post('/warnings/send', ensureAdmin, async (req, res) => {
             const [[siteSetting]] = await conn.execute(
                 "SELECT setting_value FROM site_settings WHERE setting_key = 'site_name'"
             );
-            const siteName = siteSetting?.setting_value || 'Maximum';
+            const siteName = normalizeSiteName(siteSetting?.setting_value);
 
             await emailService.sendEmail({
                 to: user.email,

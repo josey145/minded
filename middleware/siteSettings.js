@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const { DEFAULT_SITE_NAME, normalizeSiteName } = require('../utils/siteName');
 
 // Cache settings to avoid DB hit on every request
 let settingsCache = null;
@@ -19,7 +20,7 @@ const loadSiteSettings = async (req, res, next) => {
         );
 
         const site = {
-            name:              'Maximum',        // ← default fallback
+            name:              DEFAULT_SITE_NAME,
             support_email:     '',
             support_phone:     '',
             support_whatsapp:  '',
@@ -36,7 +37,7 @@ const loadSiteSettings = async (req, res, next) => {
             const val = row.setting_value;
 
             if (key === 'site_name') {
-                site.name = val || 'Maximum';
+                site.name = normalizeSiteName(val);
             } else if (key === 'live_chat_enabled') {
                 site.live_chat_enabled = val === '1';
             } else if (key === 'maintenance_mode') {
@@ -54,7 +55,7 @@ const loadSiteSettings = async (req, res, next) => {
     } catch (error) {
         console.error('Failed to load site settings:', error);
         res.locals.site = {
-            name:              'Maximum',
+            name:              DEFAULT_SITE_NAME,
             support_email:     '',
             support_phone:     '',
             support_whatsapp:  '',

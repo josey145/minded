@@ -2,19 +2,19 @@ const express = require('express');
 const router = express.Router();
 
 router.get('/', (req, res) => {
-    res.render('index', { title: 'Maximum - Trade Successfully & Safely' });
+    res.render('index', { title: 'TADAWU LX - Trade Successfully & Safely' });
 });
 
 router.get('/about', (req, res) => {
-    res.render('about', { title: 'About Us - Maximum' });
+    res.render('about', { title: 'About Us - TADAWU LX' });
 });
 
 router.get('/faq', (req, res) => {
-    res.render('faq', { title: 'FAQ - Maximum' });
+    res.render('faq', { title: 'FAQ - TADAWU LX' });
 });
 
 router.get('/terms', (req, res) => {
-    res.render('terms', { title: 'Terms of Service - Maximum' });
+    res.render('terms', { title: 'Terms of Service - TADAWU LX' });
 });
 
 // Lightweight network health check — no auth required, must stay public

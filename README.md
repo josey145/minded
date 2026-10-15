@@ -1,8 +1,8 @@
-# Maximum Crypto Trading Platform
+# TADAWU LX Crypto Trading Platform
 
 ## Overview
 
-Maximum is a Node.js-based cryptocurrency trading platform that provides real-time Bitcoin price tracking, user authentication, and administrative features. The application uses Express.js for the web server, MySQL for data persistence, Socket.IO for real-time updates, and EJS for templating.
+TADAWU LX is a Node.js-based cryptocurrency trading platform that provides real-time Bitcoin price tracking, user authentication, and administrative features. The application uses Express.js for the web server, MySQL for data persistence, Socket.IO for real-time updates, and EJS for templating.
 
 ## Features
 
@@ -107,6 +107,10 @@ npm start
 ```
 
 The application will run on `http://localhost:3000`
+
+### Languages
+
+The app stores translations locally in `public/locales/{language}.json`; no translation API key or paid service is required. The currently available locale files are English (`en`), Spanish (`es`), French (`fr`), Portuguese (`pt`), Arabic (`ar`), German (`de`), and Chinese (`zh`). Arabic UI text is translated from its local phrase dictionary and uses right-to-left layout. Country and currency names are localized by the browser when supported. Add translated interface phrases to each locale file's `phrases` map using the exact English text as the key. Add or update shared keyed labels in the `keys` map. Unmatched phrases and user-generated content remain in their original language; local dictionaries do not provide automatic translation.
 
 ## API Endpoints
 

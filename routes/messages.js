@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { DEFAULT_SITE_NAME } = require('../utils/siteName');
 const { ensureAuthenticated } = require('../middleware/authMiddleware');
 const db = require('../config/db');
 const telegramBot = require('../services/telegramBot');
@@ -8,7 +9,7 @@ const emailTemplate = ({
     badge, badgeColor,
     username, intro,
     rows, footerNote,
-    siteName = 'Maximum',
+    siteName = DEFAULT_SITE_NAME,
     siteUrl = 'https://yourdomain.com'
 }) => {
     const year = new Date().getFullYear();

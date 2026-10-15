@@ -1,7 +1,7 @@
 {
-  "name": "maximum-crypto-platform",
+  "name": "tadawu-lx-platform",
   "version": "1.0.0",
-  "description": "Maximum Crypto Trading Platform with Telegram Bot Integration",
+  "description": "TADAWU LX Crypto Trading Platform with Telegram Bot Integration",
   "main": "app.js",
   "scripts": {
     "start": "node app.js",

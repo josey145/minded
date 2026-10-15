@@ -5,7 +5,7 @@ const telegramBot = require('../services/telegramBot');
 
 
 const getLogin = (req, res) => {
-    res.render('auth/login', { title: 'Login - Maximum' });
+    res.render('auth/login', { title: 'Login - TADAWU LX' });
 };
 
 const postLogin = async (req, res) => {
@@ -83,7 +83,7 @@ console.log('✅ Past telegram call');
 };
 
 const getRegister = (req, res) => {
-    res.render('auth/register', { title: 'Register - Maximum' });
+    res.render('auth/register', { title: 'Register - TADAWU LX' });
 };
 
 const postRegister = async (req, res) => {

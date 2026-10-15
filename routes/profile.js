@@ -161,7 +161,7 @@ router.get('/', ensureAuthenticated, async (req, res) => {
         `, [req.session.user.id]);
 
         res.render('profile/profile', {
-            title:       'Profile - ' + (res.locals.site?.name || 'Maximum'),
+            title:       'Profile - ' + (res.locals.site?.name || 'TADAWU LX'),
             user:        users[0],
             transactions,
             currencies:  SUPPORTED_CURRENCIES
@@ -187,7 +187,7 @@ router.get('/settings', ensureAuthenticated, async (req, res) => {
         if (users.length === 0) return res.redirect('/dashboard');
 
         res.render('profile/settings', {
-            title:      'Settings - ' + (res.locals.site?.name || 'Maximum'),
+            title:      'Settings - ' + (res.locals.site?.name || 'TADAWU LX'),
             user:       users[0],
             currencies: SUPPORTED_CURRENCIES
         });
@@ -211,7 +211,7 @@ router.get('/edit', ensureAuthenticated, async (req, res) => {
         if (users.length === 0) return res.redirect('/profile');
 
         res.render('profile/edit', {
-            title:      'Edit Profile - ' + (res.locals.site?.name || 'Maximum'),
+            title:      'Edit Profile - ' + (res.locals.site?.name || 'TADAWU LX'),
             user:       users[0],
             currencies: SUPPORTED_CURRENCIES
         });

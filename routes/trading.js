@@ -250,7 +250,7 @@ router.get('/positions', ensureAuthenticated, async (req, res) => {
         const marginLevel = getMarginLevel(userData, totalOpenPnL);
 
         res.render('trading/positions', {
-            title: 'Open Positions - Maximum',
+            title: 'Open Positions - TADAWU LX',
             user: req.session.user,
             account: {
                 balance: effectiveBalance,

@@ -1,8 +1,8 @@
-# Project Documentation — Maximum Crypto Trading Platform
+# Project Documentation — TADAWU LX Crypto Trading Platform
 
 ## Overview
 
-Maximum is a Node.js/Express application that provides a crypto trading dashboard with real-time price updates, basic user authentication, an admin panel, Telegram integration, and webhook handling for TradingView.
+TADAWU LX is a Node.js/Express application that provides a crypto trading dashboard with real-time price updates, basic user authentication, an admin panel, Telegram integration, and webhook handling for TradingView.
 
 ## Quick start
 

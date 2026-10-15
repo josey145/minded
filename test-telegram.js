@@ -14,7 +14,7 @@ bot.getMe()
         console.log('✅ Bot working! Username:', info.username);
         
         // Try sending message
-        return bot.sendMessage(chatId, '🔔 Test message from Maximum Crypto Platform');
+        return bot.sendMessage(chatId, '🔔 Test message from TADAWU LX');
     })
     .then((result) => {
         console.log('✅ Message sent! Message ID:', result.message_id);
